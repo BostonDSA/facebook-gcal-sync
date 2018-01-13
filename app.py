@@ -5,7 +5,9 @@ import click
 import fest.cloud
 import fest.graph
 import fest.tribe
+import requests
 
+DEADMANSSNITCH_URL = os.getenv('DEADMANSSNITCH_URL')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID')
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s')
 logging.getLogger('fest.graph.GraphAPI').setLevel('DEBUG')
@@ -32,6 +34,9 @@ def main(dryrun, force):
     events = page.get_events(time_filter='upcoming')
     cloud.sync_events(GOOGLE_CALENDAR_ID, events, force=force, dryrun=dryrun)
     tribe.sync_events(events, force=force, dryrun=dryrun)
+
+    # Report to Dead Man's Snitch
+    requests.get(DEADMANSSNITCH_URL)
 
 
 if __name__ == '__main__':
