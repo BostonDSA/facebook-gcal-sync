@@ -102,3 +102,7 @@ ENV/
 
 # secrets
 .secrets
+
+# terraform
+**/.terraform
+**/terraform.tfstate*
