@@ -4,6 +4,8 @@ Sync BostonDSA facebook events to other calendars
 
 This app runs as a scheduled job in [heroku](https://dashboard.heroku.com/apps/boston-dsa-event-sync).
 
+The app is set up with automatic deployments to the `master` branch of this repo on GitHub. Take care when committing to this branch.
+
 *If you have access to the heroku app above, please treat the keys as secret*
 
 ## Prerequisites
@@ -63,3 +65,7 @@ If using the Dead Man's Snitch plugin:
 ```bash
 heroku config:set DEADMANSSNITCH_URL='<dead-mans-snitch-ping-url>'
 ```
+
+# TODO
+
+* Add terraform modules for deploying to Heroku, AWS, &c.

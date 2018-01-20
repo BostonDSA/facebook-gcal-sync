@@ -23,7 +23,7 @@ logging.getLogger('fest.tribe.TribeAPI').setLevel('DEBUG')
 @click.option('-f', '--force',
               help='Force patching without checking digest',
               is_flag=True)
-def main(dryrun, force):
+def main(dryrun=None, force=None):
     # Connect to facebook/Google/WordPress
     graph = fest.graph.GraphAPI.from_env()
     cloud = fest.cloud.CalendarAPI.from_env()
