@@ -29,8 +29,17 @@ def main(dryrun=None, force=None):
     cloud = fest.cloud.CalendarAPI.from_env()
     tribe = fest.tribe.TribeAPI.from_env()
 
-    # Sync BostonDSA events
+    # BostonDSA facebook page
     page = graph.get_page('BostonDSA')
+
+    # Remove canceled events
+    canceled = page.get_events(event_state_filter=['canceled'],
+                               time_filter='upcoming')
+    for event in canceled:
+        gevent = cloud.get_event_by_source_id(GOOGLE_CALENDAR_ID, event['id'])
+        cloud.delete_event(GOOGLE_CALENDAR_ID, gevent['id'])
+
+    # Sync BostonDSA events
     events = page.get_events(time_filter='upcoming')
     cloud.sync_events(GOOGLE_CALENDAR_ID, events, force=force, dryrun=dryrun)
     tribe.sync_events(events, force=force, dryrun=dryrun)

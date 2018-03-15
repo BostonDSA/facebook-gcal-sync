@@ -8,8 +8,9 @@ name = "pypi"
 [packages]
 
 click = "==6.7.0"
-fest = {extras = ["google", "wordpress"], version = "==0.5.1"}
+fest = {extras = ["google", "wordpress"], version = "==0.6.1"}
 
 
 [dev-packages]
 
+ipython = "*"
