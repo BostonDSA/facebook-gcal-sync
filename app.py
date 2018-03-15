@@ -37,7 +37,8 @@ def main(dryrun=None, force=None):
                                time_filter='upcoming')
     for event in canceled:
         gevent = cloud.get_event_by_source_id(GOOGLE_CALENDAR_ID, event['id'])
-        cloud.delete_event(GOOGLE_CALENDAR_ID, gevent['id'])
+        if gevent:
+            cloud.delete_event(GOOGLE_CALENDAR_ID, gevent['id'])
 
     # Sync BostonDSA events
     events = page.get_events(time_filter='upcoming')
