@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "23ef2222d3b4f12887ac23a572bef4ad487af6f9a5930fbfdf198e5d91092751"
+            "sha256": "f5223abf192d2a502552baac3dc7200018247f5913b2b1b0af2bf27475014eb4"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -41,6 +41,7 @@
                 "sha256:29f99fc6125fbc931b758dc053b3114e55c77a6e4c6c3a2674a2dc986016381d",
                 "sha256:f15516df478d5a56180fbf80e68f206010e6d160fc39fa508b65e035fd75130b"
             ],
+            "index": "pypi",
             "version": "==6.7.0"
         },
         "facebook-sdk": {
@@ -52,9 +53,10 @@
         },
         "fest": {
             "hashes": [
-                "sha256:e74e8800526f7e8d8c3ec668362102689fb7e804ee7ecfa4ff0550ba5fc1bbe4"
+                "sha256:ae03a43020d0e7ba3692d23ba24b562f5269f040770db009ed379a71290058bf"
             ],
-            "version": "==0.6.1"
+            "index": "pypi",
+            "version": "==1.0.0"
         },
         "google": {
             "hashes": [
@@ -196,6 +198,7 @@
                 "sha256:51c158a6c8b899898d1c91c6b51a34110196815cc905f9be0fa5878e19355608",
                 "sha256:fcc6d46f08c3c4de7b15ae1c426e15be1b7932bcda9d83ce1a4304e8c1129df3"
             ],
+            "index": "pypi",
             "version": "==6.2.1"
         },
         "ipython-genutils": {

@@ -8,6 +8,7 @@ import fest.tribe
 import requests
 
 DEADMANSSNITCH_URL = os.getenv('DEADMANSSNITCH_URL')
+FACEBOOK_PAGE_NAME = os.getenv('FACEBOOK_PAGE_NAME')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID')
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s')
 logging.getLogger('fest.graph.GraphAPI').setLevel('DEBUG')
@@ -30,20 +31,24 @@ def main(dryrun=None, force=None):
     tribe = fest.tribe.TribeAPI.from_env()
 
     # BostonDSA facebook page
-    page = graph.get_page('BostonDSA')
+    page = graph.get_page(FACEBOOK_PAGE_NAME)
 
-    # Remove canceled events
-    canceled = page.get_events(event_state_filter=['canceled'],
-                               time_filter='upcoming')
-    for event in canceled:
-        gevent = cloud.get_event_by_source_id(GOOGLE_CALENDAR_ID, event['id'])
-        if gevent:
-            cloud.delete_event(GOOGLE_CALENDAR_ID, gevent['id'])
+    # BostonDSA Google calendar
+    gcal = cloud.get_calendar(GOOGLE_CALENDAR_ID)
 
-    # Sync BostonDSA events
-    events = page.get_events(time_filter='upcoming')
-    cloud.sync_events(GOOGLE_CALENDAR_ID, events, force=force, dryrun=dryrun)
-    tribe.sync_events(events, force=force, dryrun=dryrun)
+    # Get upcoming events
+    upcoming = page.get_events(time_filter='upcoming')
+
+    # Get canceled events
+    canceled = page.get_events(time_filter='upcoming',
+                               event_state_filter=['canceled'])
+
+    # Event dictionary
+    source_events = {'upcoming': upcoming, 'canceled': canceled}
+
+    # Sync events
+    gcal.sync_events(source_events, force=force, dryrun=dryrun)
+    tribe.sync_events(source_events, force=force, dryrun=dryrun)
 
     # Report to Dead Man's Snitch
     requests.get(DEADMANSSNITCH_URL)
