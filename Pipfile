@@ -1,16 +1,11 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 click = "==6.7.0"
 fest = {extras = ["google", "wordpress"], version = "==1.0.0"}
 
-
 [dev-packages]
-
 ipython = "*"
