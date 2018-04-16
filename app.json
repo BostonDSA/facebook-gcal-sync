@@ -45,6 +45,6 @@
     "GOOGLE_SCOPE" : {
       "description": "Google Cloud Service Scope",
       "value": "https://www.googleapis.com/auth/calendar"
-    },
+    }
   }
 }

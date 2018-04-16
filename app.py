@@ -25,6 +25,7 @@ logging.getLogger('fest.tribe.TribeAPI').setLevel('DEBUG')
               help='Force patching without checking digest',
               is_flag=True)
 def main(dryrun=None, force=None):
+    """ Synchronize facebook with Google Calendar & WordPress. """
     # Connect to facebook/Google/WordPress
     graph = fest.graph.GraphAPI.from_env()
     cloud = fest.cloud.CalendarAPI.from_env()
