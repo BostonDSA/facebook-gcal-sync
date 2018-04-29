@@ -12,7 +12,7 @@ The app is set up with automatic deployments to the `master` branch of this repo
 
 Before beginning, you will need a host of API keys and endpoints to deploy this application.
 
-You will need to create and configure a [facebook app](https://github.com/amancevice/fest/blob/master/docs/facebook.md#facebook) to acquire the access keys to use Graph API.
+You will need to create and configure a [facebook app](https://github.com/amancevice/fest/blob/master/docs/facebook.md#facebook) to acquire the proper page token to use Graph API.
 
 For Google, you will need to set up a [Google Cloud Service](https://github.com/amancevice/fest/blob/master/docs/google.md#google-cloud) account.
 
@@ -29,9 +29,8 @@ Once the app is deployed, you will need to configure the environmental variables
 For facebook:
 
 ```bash
-heroku config:set FACEBOOK_APP_ID='<facebook-app-id>'
-heroku config:set FACEBOOK_APP_SECRET='<facebook-app-secret>'
 heroku config:set FACEBOOK_PAGE_ID='<facebook-page-id-or-alias>'
+heroku config:set FACEBOOK_PAGE_TOKEN='<facebook-page-token>'
 ```
 
 For Google:

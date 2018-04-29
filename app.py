@@ -8,7 +8,7 @@ import fest.tribe
 import requests
 
 DEADMANSSNITCH_URL = os.getenv('DEADMANSSNITCH_URL')
-FACEBOOK_PAGE_NAME = os.getenv('FACEBOOK_PAGE_NAME')
+FACEBOOK_PAGE_ID = os.getenv('FACEBOOK_PAGE_ID')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID')
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s')
 logging.getLogger('fest.graph.GraphAPI').setLevel('DEBUG')
@@ -32,7 +32,7 @@ def main(dryrun=None, force=None):
     tribe = fest.tribe.TribeAPI.from_env()
 
     # BostonDSA facebook page
-    page = graph.get_page(FACEBOOK_PAGE_NAME)
+    page = graph.get_page(FACEBOOK_PAGE_ID)
 
     # BostonDSA Google calendar
     gcal = cloud.get_calendar(GOOGLE_CALENDAR_ID)
