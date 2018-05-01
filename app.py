@@ -16,6 +16,18 @@ logging.getLogger('fest.cloud.CalendarAPI').setLevel('DEBUG')
 logging.getLogger('fest.tribe.TribeAPI').setLevel('DEBUG')
 
 
+def from_facebook_with_custom_fields(facebook_event):
+    post = fest.tribe.WordPressPost.from_facebook(facebook_event)
+    post.set_custom_field('body', 'View our list of events and get involved.')
+    post.set_custom_field('header', 'Want to check out other events?')
+    post.set_custom_field('link_text', 'View Events')
+    post.set_custom_field('link_url', 'events')
+    return post
+
+
+fest.graph.FacebookEvent.to_wordpress = from_facebook_with_custom_fields
+
+
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(fest.__version__, '-v', '--version')
 @click.option('-d', '--dryrun',

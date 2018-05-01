@@ -14,10 +14,6 @@
       "description": "Page token for Graph API access",
       "value": "ADDME"
     },
-    "GOOGLE_ACCOUNT_TYPE" : {
-      "description": "Google Service Acct Type",
-      "value": "service_account"
-    },
     "GOOGLE_CALENDAR_ID" : {
       "description": "Google Calendar ID",
       "value": "ADDME"
