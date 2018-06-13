@@ -63,7 +63,7 @@ def main(dryrun=None, force=None):
 
     # Sync events
     gcal.sync_events(source_events, force=force, dryrun=dryrun)
-    tribe.sync_events(source_events, force=force, dryrun=dryrun)
+    # tribe.sync_events(source_events, force=force, dryrun=dryrun)
 
     # Report to Dead Man's Snitch
     requests.get(DEADMANSSNITCH_URL)
