@@ -43,20 +43,18 @@ def main(dryrun=None, force=None):
     cloud = fest.cloud.CalendarAPI.from_env()
     tribe = fest.tribe.TribeAPI.from_env()
 
+    # BostonDSA facebook page
+    page = graph.get_page(FACEBOOK_PAGE_ID)
+
     # BostonDSA Google calendar
     gcal = cloud.get_calendar(GOOGLE_CALENDAR_ID)
 
     # Get upcoming events
-    upcoming = graph.get_events(FACEBOOK_PAGE_ID, time_filter='upcoming')
-
-    # Raise an error if no events
-    if not any(upcoming):
-        raise ValueError('No Events returned from Graph API')
+    upcoming = page.get_events(time_filter='upcoming')
 
     # Get canceled events
-    canceled = graph.get_events(FACEBOOK_PAGE_ID,
-                                time_filter='upcoming',
-                                event_state_filter=['canceled'])
+    canceled = page.get_events(time_filter='upcoming',
+                               event_state_filter=['canceled'])
 
     # Event dictionary
     source_events = {'upcoming': upcoming, 'canceled': canceled}
