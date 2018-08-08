@@ -101,7 +101,7 @@ ENV/
 .mypy_cache/
 
 # secrets
-.secrets
+.env
 
 # terraform
 **/.terraform
