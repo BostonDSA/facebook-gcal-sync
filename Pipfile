@@ -5,7 +5,8 @@ name = "pypi"
 
 [packages]
 click = "==6.7.0"
-fest = {extras = ["google", "wordpress"], version = "==3.0.0"}
+fest = {extras = ["google", "wordpress"], version = "==4.0.0"}
 
 [dev-packages]
+ipdb = "*"
 ipython = "*"

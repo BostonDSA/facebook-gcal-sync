@@ -37,6 +37,10 @@
     "GOOGLE_SCOPE" : {
       "description": "Google Cloud Service Scope",
       "value": "https://www.googleapis.com/auth/calendar"
+    },
+    "GOOGLE_TOKEN_URI": {
+      "description": "Google OAuth Token URI",
+      "value": "https://accounts.google.com/o/oauth2/token"
     }
   }
 }
