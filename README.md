@@ -1,70 +1,60 @@
 # Boston DSA Facebook Event Sync
 
-Sync BostonDSA facebook events to other calendars
+Sync [facbook.com/BostonDSA](https://facebook.com/BostonDSA/events) facebook events to Google Calendar.
 
-This app runs as a scheduled job in [heroku](https://dashboard.heroku.com/apps/boston-dsa-event-sync).
+This app runs on AWS [Lambda](https://aws.amazon.com/lambda/) with an hourly trigger in [CloudWatch](https://aws.amazon.com/cloudwatch) events.
 
-The app is set up with automatic deployments to the `master` branch of this repo on GitHub. Take care when committing to this branch.
+## How it Works
 
-*If you have access to the heroku app above, please treat the keys as secret*
+Using a [facebook page token](https://developers.facebook.com/docs/pages/access-tokens), a client to facebook's [Graph API](https://github.com/mobolic/facebook-sdk) requests upcoming events from the Boston DSA facebook page using the `/BostonDSA/events` REST API endpoint.
 
-## Prerequisites
+A hash is taken of each event returned by the request to compare to a private extended property in Google Calendar.
 
-Before beginning, you will need a host of API keys and endpoints to deploy this application.
+Next, using a [Google Service Account](https://cloud.google.com/iam/docs/understanding-service-accounts), a client to Google's [Calendar API](https://developers.google.com/calendar/v3/reference/) requests events in the same window as above. Events are filtered by a private extended property that indicates the event's origin is the the facebook page, `BostonDSA`.
 
-You will need to create and configure a [facebook app](https://github.com/amancevice/fest/blob/master/docs/facebook.md#facebook) to acquire the proper page token to use Graph API.
-
-For Google, you will need to set up a [Google Cloud Service](https://github.com/amancevice/fest/blob/master/docs/google.md#google-cloud) account.
-
-For WordPress, you will need to install the [Application Passwords](https://wordpress.org/plugins/application-passwords/) and [The Events Calendar](https://wordpress.org/plugins/event-tickets/) plugins. Read the [WordPress](https://github.com/amancevice/fest/blob/master/docs/wordpress.md#wordpress) docs for more information.
+Events that appear in the request to Graph API, but not the request to Google are created. Events that are found in both requests, but have different hashes are updated in Google. Events that are returned by Google, but can no longer be found on facebook are deleted.
 
 ## Deployment
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+The access keys for facebook and Google are encrypted and stored in AWS [SecretsManager](https://aws.amazon.com/secrets-manager/). The IAM role assumed by the Lambda is granted permission to decrypt and access these keys so that they don't need to be shared between collaborators on the project.
 
-Deploy this app to heroku and use the heroku scheduler to run the sync job on a cron.
+### Packaging
 
-Once the app is deployed, you will need to configure the environmental variables above. Use the heroku web console, or the terminal.
+Before the project can be deployed it will need to be packaged as a zip file to upload to Lambda.
 
-For facebook:
-
-```bash
-heroku config:set FACEBOOK_PAGE_ID='<facebook-page-id-or-alias>'
-heroku config:set FACEBOOK_PAGE_TOKEN='<facebook-page-token>'
-```
-
-For Google:
+Use `docker-compose` to generate an artifact:
 
 ```bash
-heroku config:set GOOGLE_ACCOUNT_TYPE='service_account'
-heroku config:set GOOGLE_CALENDAR_ID='<optional-google-calendar-id>'
-heroku config:set GOOGLE_CLIENT_EMAIL='<google-service-client-email>'
-heroku config:set GOOGLE_CLIENT_ID='<google-client-id>'
-heroku config:set GOOGLE_PRIVATE_KEY='<google-private-key-multi-line-string'
-heroku config:set GOOGLE_PRIVATE_KEY_ID='<google-private-key-id'
-heroku config:set GOOGLE_SCOPE='https://www.googleapis.com/auth/calendar'
+docker-compose run --rm package
+docker-compose down
 ```
 
-For WordPress:
+This will build a `package.zip` file in the `dist` directory of the repo, which is ignored by git.
+
+### Deploying
+
+This app is deployed using [terraform](https://terraform.io).
+
+You will need AWS access keys with permission to access IAM, CloudWatch, Lambda, and SecretsManager resources.
+
+It's recommended that you store your keys in [configuration and credential](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) files. This allows you to reference the keys by profile name and reduces the chances of accidentally exposing keys.
+
+Copy the `terraform.tfvars.example` file to `terraform.tfvars` and fill in with the correct values.
+
+Initialize the terraform project:
 
 ```bash
-heroku config:set WORDPRESS_ENDPOINT='<wordpress-host>/xmlrpc.php'
-heroku config:set WORDPRESS_USERNAME='<wordpress-user>'
-heroku config:set WORDPRESS_APP_PASSWORD='<wordpress-app-password>'
+terraform init
 ```
 
-For The Events Calendar Plugin:
+View any potential configuration changes:
 
 ```bash
-heroku config:set TRIBE_ENDPOINT='<wordpress-host>/wp-json/tribe/events/v1'
+terraform plan
 ```
 
-If using the Dead Man's Snitch plugin:
+Apply any configuration changes:
 
 ```bash
-heroku config:set DEADMANSSNITCH_URL='<dead-mans-snitch-ping-url>'
+terraform apply
 ```
-
-# TODO
-
-* Add terraform modules for deploying to Heroku, AWS, &c.

@@ -4,9 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-click = "==6.7.0"
-fest = {extras = ["google", "wordpress"], version = "==4.1.2"}
+fest = "*"
 
 [dev-packages]
+boto3 = "*"
 ipdb = "*"
 ipython = "*"
+
+[requires]
+python_version = "3.7"

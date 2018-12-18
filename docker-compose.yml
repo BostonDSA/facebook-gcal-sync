@@ -1,0 +1,16 @@
+version: '3'
+services:
+  package:
+    command: >
+      sh -c "
+        rm -rf build &&
+        rm -rf dist &&
+        mkdir -p build dist &&
+        pip install fest==5.0.0 -t build &&
+        cp lambda.py build &&
+        cd build &&
+        zip -x '*.pyc' '*__pycache__/*' -r ../dist/package.zip ./*
+      "
+    image: lambci/lambda:build-python3.7
+    volumes:
+      - ./:/var/task

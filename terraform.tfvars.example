@@ -1,0 +1,8 @@
+aws_profile          = ""
+aws_region           = ""
+facebook_page_id     = ""
+facebook_secret_name = ""
+google_calendar_id   = ""
+google_secret_name   = ""
+slack_channel_alarms = ""
+slack_channel_events = ""
