@@ -1,3 +1,8 @@
+variable app_name {
+  description = "Name of app."
+  default     = "facebook-gcal-sync"
+}
+
 variable aws_access_key_id {
   description = "AWS Access Key ID."
   default     = ""
