@@ -35,18 +35,22 @@ variable event_rule_is_enabled {
 
 variable facebook_page_id {
   description = "facebook page ID."
+  default     = "BostonDSA"
 }
 
 variable facebook_secret_name {
   description = "facebook token SecretsManager secret name."
+  default     = "facebook/BostonDSA"
 }
 
 variable google_calendar_id {
   description = "Google Calendar ID."
+  default     = "u21m8kt8bb1lflp8jpmd317iik@group.calendar.google.com"
 }
 
 variable google_secret_name {
   description = "Google service account SecretsManager secret name."
+  default     = "google/socialismbot"
 }
 
 variable slack_author_icon {
@@ -56,10 +60,12 @@ variable slack_author_icon {
 
 variable slack_channel_alarms {
   description = "Slack channel where alarms are posted."
+  default     = "C7F7YRQUC"
 }
 
 variable slack_channel_events {
   description = "Slack channel where events are posted."
+  default     = "C7F7Z0WJG"
 }
 
 variable slack_footer_icon {
