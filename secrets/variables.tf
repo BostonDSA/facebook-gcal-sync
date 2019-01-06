@@ -33,3 +33,12 @@ variable google_credentials_file {
 variable google_secret_name {
   description = "Google service account SecretsManager secret name."
 }
+
+variable release {
+  description = "Release tag."
+}
+
+variable repo {
+  description = "Project repository."
+  default     = "https://github.com/BostonDSA/facebook-gcal-sync.git"
+}

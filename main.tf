@@ -10,6 +10,14 @@ provider aws {
   version    = "~> 1.52"
 }
 
+locals {
+  tags {
+    App     = "facebook-gcal-sync"
+    Release = "${var.release}"
+    Repo    = "${var.repo}"
+  }
+}
+
 /* IAM - Access to AWS resources for sync/alarm
  *
  * Can be assumed by CloudWatch & Lambda
@@ -132,6 +140,7 @@ resource aws_lambda_function sync {
   role             = "${aws_iam_role.role.arn}"
   runtime          = "python3.7"
   source_code_hash = "${data.archive_file.sync.output_base64sha256}"
+  tags             = "${local.tags}"
   timeout          = 15
 
   environment {
@@ -199,6 +208,7 @@ resource aws_lambda_function alarm {
   role             = "${aws_iam_role.role.arn}"
   runtime          = "python3.7"
   source_code_hash = "${data.archive_file.alarm.output_base64sha256}"
+  tags             = "${local.tags}"
 
   environment {
     variables {

@@ -77,3 +77,12 @@ variable slack_footer_url {
   description = "Slack footer link URL."
   default     = "https://github.com/BostonDSA/facebook-gcal-sync"
 }
+
+variable release {
+  description = "Release tag."
+}
+
+variable repo {
+  description = "Project repository."
+  default     = "https://github.com/BostonDSA/facebook-gcal-sync.git"
+}
