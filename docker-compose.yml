@@ -1,16 +1,27 @@
 version: '3'
 services:
-  package:
-    command: >
+
+  # Build project dependencies
+  build:
+    command: >-
       sh -c "
-        rm -rf build &&
-        rm -rf dist &&
         mkdir -p build dist &&
         pip install fest==5.0.0 -t build &&
-        cp lambda.py build &&
-        cd build &&
-        zip -x '*.pyc' '*__pycache__/*' -r ../dist/package.zip ./*
+        cp lambda.py build
       "
     image: lambci/lambda:build-python3.7
     volumes:
-      - ./:/var/task
+    - ./:/var/task
+
+  # Deploy to AWS
+  terraform:
+    environment:
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      TF_VAR_release:
+      TF_VAR_repo:
+    image: hashicorp/terraform
+    volumes:
+      - ~/.aws:/root/.aws
+      - ./:/terraform
+    working_dir: /terraform

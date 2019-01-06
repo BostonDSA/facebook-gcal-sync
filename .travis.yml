@@ -1,0 +1,19 @@
+language: node_js
+services:
+  - docker
+cache:
+  directories:
+    - "${HOME}/build"
+before_install:
+  - export TF_VAR_release="${TRAVIS_TAG:-$(date +%Y.%-m.%-d)}"
+  - export TF_VAR_repo="$(git config --get remote.origin.url)"
+  - docker-compose run terraform init
+install:
+  - docker-compose run build
+jobs:
+  include:
+    - stage: test
+      script: docker-compose run terraform plan
+    - stage: deploy
+      script: docker-compose run terraform apply -auto-approve
+      if: tag IS present

@@ -48,7 +48,7 @@ data aws_iam_policy_document inline {
   statement {
     sid       = "PublishToSns"
     actions   = ["sns:Publish"]
-    resources = ["${data.terraform_remote_state.socialismbot.slack_post_message_topic_arn}"]
+    resources = ["${data.terraform_remote_state.socialismbot.post_message_topic_arn}"]
   }
 
   statement {
@@ -99,6 +99,12 @@ resource aws_iam_role_policy role_policy {
  * CloudWatch event target triggers Lambda function
  * Lambda function syncs events and posts to Slack SNS topic
  */
+data archive_file sync {
+  type        = "zip"
+  source_dir  = "${path.module}/build"
+  output_path = "${path.module}/dist/package.zip"
+}
+
 resource aws_cloudwatch_event_rule sync {
   description         = "Sync facebook events with Google Calendar"
   is_enabled          = "${var.event_rule_is_enabled}"
@@ -120,12 +126,12 @@ resource aws_cloudwatch_log_group sync {
 
 resource aws_lambda_function sync {
   description      = "Synchronize facebook page events with Google Calendar"
-  filename         = "${path.module}/dist/package.zip"
+  filename         = "${data.archive_file.sync.output_path}"
   function_name    = "${var.app_name}"
   handler          = "lambda.handler"
   role             = "${aws_iam_role.role.arn}"
   runtime          = "python3.7"
-  source_code_hash = "${base64sha256(file("${path.module}/dist/package.zip"))}"
+  source_code_hash = "${data.archive_file.sync.output_base64sha256}"
   timeout          = 15
 
   environment {
@@ -137,7 +143,7 @@ resource aws_lambda_function sync {
       SLACK_CHANNEL      = "${var.slack_channel_events}"
       SLACK_FOOTER_ICON  = "${var.slack_footer_icon}"
       SLACK_FOOTER_URL   = "${var.slack_footer_url}"
-      SLACK_TOPIC_ARN    = "${data.terraform_remote_state.socialismbot.slack_post_message_topic_arn}"
+      SLACK_TOPIC_ARN    = "${data.terraform_remote_state.socialismbot.post_message_topic_arn}"
     }
   }
 }
@@ -200,7 +206,7 @@ resource aws_lambda_function alarm {
       SLACK_CHANNEL     = "${var.slack_channel_alarms}"
       SLACK_FOOTER_ICON = "${var.slack_footer_icon}"
       SLACK_FOOTER_URL  = "${var.slack_footer_url}"
-      SLACK_TOPIC_ARN   = "${data.terraform_remote_state.socialismbot.slack_post_message_topic_arn}"
+      SLACK_TOPIC_ARN   = "${data.terraform_remote_state.socialismbot.post_message_topic_arn}"
     }
   }
 }
