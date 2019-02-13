@@ -43,11 +43,12 @@ CALENDARAPI = discovery.build(
     credentials=GOOGLE_CREDENTIALS,
 )
 
-# Configure logging
-logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s')
-
 
 def handler(event, *_):
+    # Log Event
+    eventstr = json.dumps(event)
+    print(f'EVENT {eventstr}')
+
     # Get args from event
     event = event or {}
     cal_id = event.get('calendarId') or GOOGLE_CALENDAR_ID
