@@ -1,88 +1,89 @@
-variable app_name {
+variable "app_name" {
   description = "Name of app."
   default     = "facebook-gcal-sync"
 }
 
-variable aws_access_key_id {
+variable "aws_access_key_id" {
   description = "AWS Access Key ID."
   default     = ""
 }
 
-variable aws_secret_access_key {
+variable "aws_secret_access_key" {
   description = "AWS Secret Access Key."
   default     = ""
 }
 
-variable aws_profile {
+variable "aws_profile" {
   description = "AWS Profile."
   default     = ""
 }
 
-variable aws_region {
+variable "aws_region" {
   description = "AWS Region."
   default     = "us-east-1"
 }
 
-variable event_rule_schedule_expression {
+variable "event_rule_schedule_expression" {
   description = "CloudWatch event rule expression"
   default     = "rate(1 hour)"
 }
 
-variable event_rule_is_enabled {
+variable "event_rule_is_enabled" {
   description = "CloudWatch event rule enable/disable"
   default     = true
 }
 
-variable facebook_page_id {
+variable "facebook_page_id" {
   description = "facebook page ID."
   default     = "BostonDSA"
 }
 
-variable facebook_secret_name {
+variable "facebook_secret_name" {
   description = "facebook token SecretsManager secret name."
   default     = "facebook/BostonDSA"
 }
 
-variable google_calendar_id {
+variable "google_calendar_id" {
   description = "Google Calendar ID."
   default     = "u21m8kt8bb1lflp8jpmd317iik@group.calendar.google.com"
 }
 
-variable google_secret_name {
+variable "google_secret_name" {
   description = "Google service account SecretsManager secret name."
   default     = "google/socialismbot"
 }
 
-variable slack_author_icon {
+variable "slack_author_icon" {
   description = "Slack message author icon URL."
   default     = "https://en.facebookbrand.com/wp-content/themes/fb-branding/assets/favicons/apple-touch-icon-57x57.png"
 }
 
-variable slack_channel_alarms {
+variable "slack_channel_alarms" {
   description = "Slack channel where alarms are posted."
   default     = "C7F7YRQUC"
 }
 
-variable slack_channel_events {
+variable "slack_channel_events" {
   description = "Slack channel where events are posted."
   default     = "C7F7Z0WJG"
 }
 
-variable slack_footer_icon {
+variable "slack_footer_icon" {
   description = "Slack footer icon URL."
   default     = "https://assets-cdn.github.com/favicon.ico"
 }
 
-variable slack_footer_url {
+variable "slack_footer_url" {
   description = "Slack footer link URL."
   default     = "https://github.com/BostonDSA/facebook-gcal-sync"
 }
 
-variable release {
+variable "release" {
   description = "Release tag."
 }
 
-variable repo {
+variable "repo" {
   description = "Project repository."
   default     = "https://github.com/BostonDSA/facebook-gcal-sync.git"
 }
+
