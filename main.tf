@@ -7,11 +7,11 @@ provider aws {
   secret_key = "${var.aws_secret_access_key}"
   profile    = "${var.aws_profile}"
   region     = "${var.aws_region}"
-  version    = "~> 1.52"
+  version    = "~> 2.7"
 }
 
 locals {
-  tags {
+  tags = {
     App     = "facebook-gcal-sync"
     Release = "${var.release}"
     Repo    = "${var.repo}"
@@ -39,7 +39,7 @@ data aws_iam_policy_document assume_role {
 
 data aws_iam_policy_document inline {
   statement {
-    sid       = "InvokeFunction",
+    sid       = "InvokeFunction"
     actions   = ["lambda:InvokeFunction"]
     resources = ["${aws_lambda_function.sync.arn}"]
   }
@@ -56,7 +56,7 @@ data aws_iam_policy_document inline {
   statement {
     sid       = "PublishToSns"
     actions   = ["sns:Publish"]
-    resources = ["${data.terraform_remote_state.socialismbot.post_message_topic_arn}"]
+    resources = ["${data.terraform_remote_state.socialismbot.outputs.post_message_topic_arn}"]
   }
 
   statement {
@@ -81,7 +81,7 @@ data aws_secretsmanager_secret google {
 data terraform_remote_state socialismbot {
   backend = "s3"
 
-  config {
+  config = {
     bucket  = "terraform.bostondsa.org"
     key     = "socialismbot.tfstate"
     region  = "us-east-1"
@@ -144,7 +144,7 @@ resource aws_lambda_function sync {
   timeout          = 15
 
   environment {
-    variables {
+    variables = {
       FACEBOOK_PAGE_ID   = "${var.facebook_page_id}"
       FACEBOOK_SECRET    = "${var.facebook_secret_name}"
       GOOGLE_CALENDAR_ID = "${var.google_calendar_id}"
@@ -152,7 +152,7 @@ resource aws_lambda_function sync {
       SLACK_CHANNEL      = "${var.slack_channel_events}"
       SLACK_FOOTER_ICON  = "${var.slack_footer_icon}"
       SLACK_FOOTER_URL   = "${var.slack_footer_url}"
-      SLACK_TOPIC_ARN    = "${data.terraform_remote_state.socialismbot.post_message_topic_arn}"
+      SLACK_TOPIC_ARN    = "${data.terraform_remote_state.socialismbot.outputs.post_message_topic_arn}"
     }
   }
 }
@@ -195,7 +195,7 @@ resource aws_cloudwatch_metric_alarm alarm {
   threshold           = "1"
   treat_missing_data  = "notBreaching"
 
-  dimensions {
+  dimensions = {
     RuleName = "${aws_cloudwatch_event_rule.sync.name}"
   }
 }
@@ -211,12 +211,12 @@ resource aws_lambda_function alarm {
   tags             = "${local.tags}"
 
   environment {
-    variables {
+    variables = {
       SLACK_AUTHOR_ICON = "${var.slack_author_icon}"
       SLACK_CHANNEL     = "${var.slack_channel_alarms}"
       SLACK_FOOTER_ICON = "${var.slack_footer_icon}"
       SLACK_FOOTER_URL  = "${var.slack_footer_url}"
-      SLACK_TOPIC_ARN   = "${data.terraform_remote_state.socialismbot.post_message_topic_arn}"
+      SLACK_TOPIC_ARN   = "${data.terraform_remote_state.socialismbot.outputs.post_message_topic_arn}"
     }
   }
 }
