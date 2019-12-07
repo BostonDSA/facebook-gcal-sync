@@ -71,7 +71,20 @@ def handler(event, *_):
 
     # Post and return
     if not dryrun and any(message['attachments']):
-        SNS.publish(TopicArn=SLACK_TOPIC_ARN, Message=json.dumps(message))
+        SNS.publish(
+            TopicArn=SLACK_TOPIC_ARN,
+            Message=json.dumps(message),
+            MessageAttributes={
+                'id': {
+                    'DataType': 'String',
+                    'StringValue': 'postMessage'
+                },
+                'type': {
+                    'DataType': 'String',
+                    'StringValue': 'chat'
+                }
+            }
+        )
     return message
 
 
@@ -107,7 +120,7 @@ def slack_message(results, channel=None, user=None):
     attachments = created + updated + deleted
     if any(attachments):
         attachments[-1].update(slack_footer(user))
-    message = {'channel': channel, 'attachments': attachments}
+    message = {'channel': channel, 'text': 'Events', 'attachments': attachments}
     return message
 
 
