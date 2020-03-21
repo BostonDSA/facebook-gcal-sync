@@ -46,8 +46,7 @@ CALENDARAPI = discovery.build(
 
 def handler(event, *_):
     # Log Event
-    eventstr = json.dumps(event)
-    print(f'EVENT {eventstr}')
+    print(f'EVENT {json.dumps(event)}')
 
     # Get args from event
     event = event or {}
