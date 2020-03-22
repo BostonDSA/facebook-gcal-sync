@@ -8,6 +8,7 @@ script:
 deploy:
   provider: script
   script: make apply
+  skip_cleanup: true
   on:
     repo: BostonDSA/facebook-gcal-sync
     tags: true
