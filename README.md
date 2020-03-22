@@ -27,7 +27,7 @@ make .env
 Build the Lambda deployment packages (requires Docker)
 
 ```bash
-make zip
+make
 ```
 
 Generate plan for updating infrastructure
