@@ -29,7 +29,7 @@ locals {
 
   tags = {
     App     = local.app_name
-    Release = var.RELEASE
+    Version = var.VERSION
     Repo    = local.repo
   }
 }
@@ -260,6 +260,26 @@ resource aws_sns_topic_subscription alarm {
   endpoint  = aws_lambda_function.alarm.arn
 }
 
-variable RELEASE {
+output alarm_function_arn {
+  description = "Alarm Lambda function ARN"
+  value       = aws_lambda_function.alarm.arn
+}
+
+output alarm_function_name {
+  description = "Alarm Lambda function name"
+  value       = aws_lambda_function.alarm.function_name
+}
+
+output sync_function_arn {
+  description = "Sync Lambda function ARN"
+  value       = aws_lambda_function.sync.arn
+}
+
+output sync_function_name {
+  description = "Sync Lambda function name"
+  value       = aws_lambda_function.sync.function_name
+}
+
+variable VERSION {
   description = "Release tag name"
 }

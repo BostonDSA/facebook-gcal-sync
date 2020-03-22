@@ -1,32 +1,29 @@
+FUNCTIONS := alarm sync
 REPO      := boston-dsa/facebook-gcal-sync
 STAGES    := lock zip plan
-CLEANS    := $(foreach STAGE,$(STAGES),clean-$(STAGE))
+PACKAGES  := $(foreach FUNC,$(FUNCTIONS),dist/$(FUNC).zip)
 PYTHON    := $(shell cat .python-version | cut -d'.' -f1,2)
-RELEASE   := $(shell git describe --tags --always)
-TIMESTAMP := $(shell date +%s)
+VERSION   := $(shell git describe --tags --always)
 
-.PHONY: default apply clean clobber $(STAGES) $(CLEANS)
+.PHONY: default apply clean clear clobber $(STAGES)
 
-default: zip
-lock: Pipfile.lock
-zip: lock dist/alarm.zip dist/sync.zip
-plan: zip
+default: Pipfile.lock $(PACKAGES)
 
 .docker dist:
 	mkdir -p $@
 
-.docker/lock: Pipfile
-.docker/zip: src
+.docker/lock: Dockerfile Pipfile
+.docker/zip: .docker/lock $(shell find src -type f)
+.docker/plan: .docker/zip
 .docker/%: | .docker
 	docker build \
 	--build-arg PYTHON=$(PYTHON) \
 	--build-arg AWS_ACCESS_KEY_ID \
 	--build-arg AWS_DEFAULT_REGION \
 	--build-arg AWS_SECRET_ACCESS_KEY \
-	--build-arg TF_VAR_RELEASE=$(RELEASE) \
+	--build-arg TF_VAR_VERSION=$(VERSION) \
 	--iidfile $@ \
 	--tag $(REPO):$* \
-	--tag $(REPO):$*-$(TIMESTAMP) \
 	--target $* \
 	.
 
@@ -36,20 +33,21 @@ plan: zip
 Pipfile.lock: .docker/lock
 	docker run --rm --entrypoint cat $$(cat $<) $@ > $@
 
-dist/alarm.zip dist/sync.zip: dist/%: .docker/zip | dist
-	docker run --rm --entrypoint cat $$(cat $<) $* > $@
-
 apply: .docker/plan
-	docker run --rm $$(cat $<)
+	docker run --rm \
+	--env AWS_ACCESS_KEY_ID \
+	--env AWS_DEFAULT_REGION \
+	--env AWS_SECRET_ACCESS_KEY \
+	$$(cat $<)
 
-clean: $(CLEANS)
+clean:
+	rm -rf .docker
 
 clobber: clean
-	docker image ls $(REPO) --quiet | xargs docker image rm --force
-	rm -rf .docker dist
+	docker image ls $(REPO) --quiet | uniq | xargs docker image rm --force
+	rm -rf dist
 
-$(CLEANS): clean-%:
-	docker image ls $(REPO):$*-* --format '{{.Repository}}:{{.Tag}}' | xargs docker image rm
-	rm -rf .docker/$**
+$(PACKAGES): .docker/zip dist
+	docker run --rm --entrypoint cat $$(cat $<) $@ > $@
 
 $(STAGES): %: .docker/%
