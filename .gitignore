@@ -8,6 +8,7 @@
 # .tfvars files
 *.tfvars
 
+.docker/
 .env
 build
 dist
