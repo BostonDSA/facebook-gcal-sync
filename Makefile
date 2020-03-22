@@ -50,6 +50,6 @@ clobber: clean
 
 $(CLEANS): clean-%:
 	docker image ls $(REPO):$*-* --format '{{.Repository}}:{{.Tag}}' | xargs docker image rm
-	rm -rf .docker/$*-* .docker/$*
+	rm -rf .docker/$**
 
 $(STAGES): %: .docker/%

@@ -231,7 +231,7 @@ resource aws_lambda_function alarm {
   handler          = "alarm.handler"
   role             = aws_iam_role.role.arn
   runtime          = "python3.8"
-  source_code_hash = filebase64sha256("dist/sync.zip")
+  source_code_hash = filebase64sha256("dist/alarm.zip")
   tags             = local.tags
 
   environment {
