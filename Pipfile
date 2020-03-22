@@ -10,6 +10,3 @@ fest = "*"
 boto3 = "*"
 ipdb = "*"
 ipython = "*"
-
-[requires]
-python_version = "3.7"
