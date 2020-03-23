@@ -166,7 +166,7 @@ resource aws_lambda_function sync {
   description      = "Synchronize facebook page events with Google Calendar"
   filename         = "dist/sync.zip"
   function_name    = local.app_name
-  handler          = "lambda.handler"
+  handler          = "sync.handler"
   role             = aws_iam_role.role.arn
   runtime          = "python3.8"
   source_code_hash = filebase64sha256("dist/sync.zip")
