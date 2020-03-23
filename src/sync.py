@@ -65,26 +65,32 @@ def event_to_attachment(event, color='good'):
 
 
 def event_to_text(event):
-    loc = event.get('location')
-    loc = f'<https://maps.google.com/maps?q={urllib.parse.quote(loc)}|{loc}>'
+    # Get event time(s)
     start = event_time(event['start'])
     end = event_time(event['end'])
     if isinstance(start, datetime) and isinstance(end, datetime) \
             and start.date() == end.date():
         start = start.strftime('%b %-d from %-I:%M%p').lower().capitalize()
         end = end.strftime('%-I:%M%p').lower()
-        text = f'{start} to {end} at {loc}'
+        text = f'{start} to {end}'
     elif isinstance(start, date) and isinstance(end, date) and start == end:
         start = start.strftime('%b %-d')
-        text = f'{start} at {loc}'
+        text = f'{start}'
     elif start.year == end.year:
         start = start.strftime('%b %-d')
         end = end.strftime('%b %-d')
-        text = f'{start} through {end} at {loc}'
+        text = f'{start} through {end}'
     else:
         start = start.strftime('%b %-d, %Y')
         end = end.strftime('%b %-d, %Y')
-        text = f'{start} through {end} at {loc}'
+        text = f'{start} through {end}'
+
+    # Get event location
+    loc = event.get('location')
+    if loc:
+        mapsloc = urllib.parse.quote(loc)
+        text += f' at <https://maps.google.com/maps?q={mapsloc}|{loc}>'
+
     return text
 
 
