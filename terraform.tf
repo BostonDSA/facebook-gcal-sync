@@ -82,6 +82,7 @@ data aws_iam_policy_document inline {
     resources = [
       data.aws_secretsmanager_secret.facebook.arn,
       data.aws_secretsmanager_secret.google.arn,
+      data.aws_secretsmanager_secret.action_network.arn,
     ]
   }
 
@@ -118,6 +119,10 @@ data aws_secretsmanager_secret facebook {
 
 data aws_secretsmanager_secret google {
   name = "google/socialismbot"
+}
+
+data aws_secretsmanager_secret action_network {
+  name = "actionnetwork/BostonDSA"
 }
 
 data aws_sns_topic socialismbot {
@@ -182,6 +187,7 @@ resource aws_lambda_function sync {
       SLACK_CHANNEL      = local.slack_channels["events"]
       SLACK_FOOTER_URL   = local.repo
       SLACK_TOPIC_ARN    = data.aws_sns_topic.socialismbot.arn
+      ACTION_NETWORK_SECRET = data.aws_secretsmanager_secret.action_network.name
     }
   }
 }
