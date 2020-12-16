@@ -2,11 +2,8 @@ terraform {
   backend s3 {
     bucket  = "terraform.bostondsa.org"
     key     = "facebook-gcal-sync-secrets.tfstate"
-    profile = "bdsa"
     region  = "us-east-1"
   }
-
-  required_version = "~> 0.12"
 }
 
 locals {
@@ -22,13 +19,12 @@ locals {
 provider aws {
   profile = "bdsa"
   region  = "us-east-1"
-  version = "~> 2.11"
 }
 
 module secrets {
   # source                      = "amancevice/facebook-gcal-sync-secrets/aws"
   # version                     = "~> 0.2"
-  source = "/Users/amancevice/smallweirdnumber/terraform/aws/facebook-gcal-sync-secrets"
+  source = "github.com/amancevice/terraform-aws-facebook-gcal-sync-secrets"
 
   facebook_secret_description = "Access token for facebook.com/BostonDSA facebook page."
   google_secret_description   = "Google service account credentials for socialismbot."
