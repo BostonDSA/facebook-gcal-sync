@@ -1,8 +1,8 @@
 terraform {
-  backend s3 {
-    bucket  = "terraform.bostondsa.org"
-    key     = "facebook-gcal-sync-secrets.tfstate"
-    region  = "us-east-1"
+  backend "s3" {
+    bucket = "terraform.bostondsa.org"
+    key    = "facebook-gcal-sync-secrets.tfstate"
+    region = "us-east-1"
   }
 }
 
@@ -16,12 +16,12 @@ locals {
   release                 = var.release
 }
 
-provider aws {
+provider "aws" {
   profile = "bdsa"
   region  = "us-east-1"
 }
 
-module secrets {
+module "secrets" {
   # version                     = "~> 0.2"
   source = "github.com/amancevice/terraform-aws-facebook-gcal-sync-secrets"
 
@@ -47,42 +47,42 @@ module secrets {
   }
 }
 
-output facebook_secret_arn {
+output "facebook_secret_arn" {
   description = "facebook SecretsManager secret ARN"
   value       = module.secrets.facebook_secret.arn
 }
 
-output facebook_secret_name {
+output "facebook_secret_name" {
   description = "facebook SecretsManager secret name"
   value       = module.secrets.facebook_secret.name
 }
 
-output google_secret_arn {
+output "google_secret_arn" {
   description = "Google service account SecretsManager secret ARN"
   value       = module.secrets.google_secret.arn
 }
 
-output google_secret_name {
+output "google_secret_name" {
   description = "Google service account SecretsManager secret name"
   value       = module.secrets.google_secret.name
 }
 
-variable facebook_page_token {
+variable "facebook_page_token" {
   description = "Page token for facebook.com/BostonDSA"
 }
 
-variable facebook_secret_name {
+variable "facebook_secret_name" {
   description = "facebook SecretsManager secret name"
 }
 
-variable google_credentials_file {
+variable "google_credentials_file" {
   description = "Path to Google Service Account credentials file"
 }
 
-variable google_secret_name {
+variable "google_secret_name" {
   description = "Google service account SecretsManager secret name"
 }
 
-variable release {
+variable "release" {
   description = "Release tag"
 }

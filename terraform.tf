@@ -1,13 +1,13 @@
 terraform {
-  backend s3 {
-    bucket  = "terraform.bostondsa.org"
-    key     = "facebook-gcal-sync.tfstate"
-    region  = "us-east-1"
+  backend "s3" {
+    bucket   = "terraform.bostondsa.org"
+    key      = "facebook-gcal-sync.tfstate"
+    region   = "us-east-1"
     role_arn = "arn:aws:iam::715992480927:role/terraform"
   }
 }
 
-provider aws {
+provider "aws" {
   region  = "us-east-1"
   version = "~> 3.0"
   profile = var.AWS_PROFILE
@@ -42,7 +42,7 @@ locals {
  * Grant permission to publish to SNS topic to send Slack messages
  * Grant permission to write CloudWatch logs
  */
-data aws_iam_policy_document assume_role {
+data "aws_iam_policy_document" "assume_role" {
   statement {
     actions = [
       "sts:AssumeRole",
@@ -59,7 +59,7 @@ data aws_iam_policy_document assume_role {
   }
 }
 
-data aws_iam_policy_document inline {
+data "aws_iam_policy_document" "inline" {
   statement {
     sid = "InvokeFunction"
 
@@ -112,25 +112,25 @@ data aws_iam_policy_document inline {
   }
 }
 
-data aws_secretsmanager_secret facebook {
+data "aws_secretsmanager_secret" "facebook" {
   name = "facebook/BostonDSA"
 }
 
-data aws_secretsmanager_secret google {
+data "aws_secretsmanager_secret" "google" {
   name = "google/socialismbot"
 }
 
-data aws_sns_topic socialismbot {
+data "aws_sns_topic" "socialismbot" {
   name = "slack-socialismbot"
 }
 
-resource aws_iam_role role {
+resource "aws_iam_role" "role" {
   description        = "Access to facebook, Google, and AWS resources."
   name               = local.app_name
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-resource aws_iam_role_policy role_policy {
+resource "aws_iam_role_policy" "role_policy" {
   name   = aws_iam_role.role.name
   policy = data.aws_iam_policy_document.inline.json
   role   = aws_iam_role.role.name
@@ -143,7 +143,7 @@ resource aws_iam_role_policy role_policy {
  * Lambda function syncs events and posts to Slack SNS topic
  */
 
-resource aws_cloudwatch_event_rule sync {
+resource "aws_cloudwatch_event_rule" "sync" {
   description         = "Sync facebook events with Google Calendar"
   is_enabled          = local.event_rule_is_enabled
   name                = aws_lambda_function.sync.function_name
@@ -151,18 +151,18 @@ resource aws_cloudwatch_event_rule sync {
   schedule_expression = local.event_rule_schedule_expression
 }
 
-resource aws_cloudwatch_event_target sync {
+resource "aws_cloudwatch_event_target" "sync" {
   arn   = aws_lambda_function.sync.arn
   input = "{}"
   rule  = aws_cloudwatch_event_rule.sync.name
 }
 
-resource aws_cloudwatch_log_group sync {
+resource "aws_cloudwatch_log_group" "sync" {
   name              = "/aws/lambda/${aws_lambda_function.sync.function_name}"
   retention_in_days = 30
 }
 
-resource aws_lambda_function sync {
+resource "aws_lambda_function" "sync" {
   description      = "Synchronize facebook page events with Google Calendar"
   filename         = "dist/sync.zip"
   function_name    = local.app_name
@@ -186,7 +186,7 @@ resource aws_lambda_function sync {
   }
 }
 
-resource aws_lambda_permission sync {
+resource "aws_lambda_permission" "sync" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.sync.function_name
   principal     = "events.amazonaws.com"
@@ -200,12 +200,12 @@ resource aws_lambda_permission sync {
  * Lambda composes message and publishes to @Socialismbot
  */
 
-resource aws_cloudwatch_log_group alarm {
+resource "aws_cloudwatch_log_group" "alarm" {
   name              = "/aws/lambda/${aws_lambda_function.alarm.function_name}"
   retention_in_days = 30
 }
 
-resource aws_cloudwatch_metric_alarm alarm {
+resource "aws_cloudwatch_metric_alarm" "alarm" {
   alarm_actions       = [aws_sns_topic.alarm.arn]
   alarm_description   = "${local.app_name} is failing"
   alarm_name          = local.app_name
@@ -224,7 +224,7 @@ resource aws_cloudwatch_metric_alarm alarm {
   }
 }
 
-resource aws_lambda_function alarm {
+resource "aws_lambda_function" "alarm" {
   description      = "Publish Slack message when ${local.app_name} is failing"
   filename         = "dist/alarm.zip"
   function_name    = "${local.app_name}-alarm"
@@ -243,47 +243,47 @@ resource aws_lambda_function alarm {
   }
 }
 
-resource aws_lambda_permission alarm {
+resource "aws_lambda_permission" "alarm" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.alarm.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.alarm.arn
 }
 
-resource aws_sns_topic alarm {
+resource "aws_sns_topic" "alarm" {
   name = "${replace(local.app_name, "-", "_")}_alarm"
 }
 
-resource aws_sns_topic_subscription alarm {
+resource "aws_sns_topic_subscription" "alarm" {
   topic_arn = aws_sns_topic.alarm.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.alarm.arn
 }
 
-output alarm_function_arn {
+output "alarm_function_arn" {
   description = "Alarm Lambda function ARN"
   value       = aws_lambda_function.alarm.arn
 }
 
-output alarm_function_name {
+output "alarm_function_name" {
   description = "Alarm Lambda function name"
   value       = aws_lambda_function.alarm.function_name
 }
 
-output sync_function_arn {
+output "sync_function_arn" {
   description = "Sync Lambda function ARN"
   value       = aws_lambda_function.sync.arn
 }
 
-output sync_function_name {
+output "sync_function_name" {
   description = "Sync Lambda function name"
   value       = aws_lambda_function.sync.function_name
 }
 
-variable VERSION {
+variable "VERSION" {
   description = "Release tag name"
 }
 
-variable AWS_PROFILE {
+variable "AWS_PROFILE" {
   description = "AWS Profile"
 }
