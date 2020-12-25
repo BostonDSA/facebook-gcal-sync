@@ -22,7 +22,6 @@ provider aws {
 }
 
 module secrets {
-  # source                      = "amancevice/facebook-gcal-sync-secrets/aws"
   # version                     = "~> 0.2"
   source = "github.com/amancevice/terraform-aws-facebook-gcal-sync-secrets"
 

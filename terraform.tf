@@ -1,15 +1,15 @@
 terraform {
   backend s3 {
-    bucket = "terraform.bostondsa.org"
-    key    = "facebook-gcal-sync.tfstate"
-    region = "us-east-1"
+    bucket  = "terraform.bostondsa.org"
+    key     = "facebook-gcal-sync.tfstate"
+    region  = "us-east-1"
   }
-
 }
 
 provider aws {
   region  = "us-east-1"
   version = "~> 3.0"
+  profile = var.AWS_PROFILE
 }
 
 locals {
@@ -281,4 +281,8 @@ output sync_function_name {
 
 variable VERSION {
   description = "Release tag name"
+}
+
+variable AWS_PROFILE {
+  description = "AWS Profile"
 }
