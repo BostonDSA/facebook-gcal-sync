@@ -3,6 +3,7 @@ terraform {
     bucket  = "terraform.bostondsa.org"
     key     = "facebook-gcal-sync.tfstate"
     region  = "us-east-1"
+    role_arn = "arn:aws:iam::715992480927:role/terraform"
   }
 }
 

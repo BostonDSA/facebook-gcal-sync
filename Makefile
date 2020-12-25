@@ -21,6 +21,7 @@ default: Pipfile.lock $(PACKAGES)
 	--build-arg AWS_ACCESS_KEY_ID \
 	--build-arg AWS_DEFAULT_REGION \
 	--build-arg AWS_SECRET_ACCESS_KEY \
+	--build-arg AWS_ROLE_ARN \
 	--build-arg TF_VAR_VERSION=$(VERSION) \
 	--iidfile $@ \
 	--tag $(REPO):$* \
@@ -38,6 +39,7 @@ apply: .docker/plan
 	--env AWS_ACCESS_KEY_ID \
 	--env AWS_DEFAULT_REGION \
 	--env AWS_SECRET_ACCESS_KEY \
+	--env AWS_ROLE_ARN \
 	$$(cat $<)
 
 clean:
