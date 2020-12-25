@@ -28,5 +28,5 @@ RUN terraform init -backend-config="role_arn=${AWS_ROLE_ARN}"
 RUN terraform fmt -check
 COPY --from=zip /var/task/dist/ /var/task/dist/
 ARG TF_VAR_VERSION
-RUN terraform plan -out terraform.zip
+RUN terraform plan -var="AWS_ROLE_ARN=${AWS_ROLE_ARN}" -out terraform.zip
 CMD ["apply", "terraform.zip"]
