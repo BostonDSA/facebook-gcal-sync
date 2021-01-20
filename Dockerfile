@@ -23,9 +23,10 @@ COPY *.tf /var/task/
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_DEFAULT_REGION=us-east-1
 ARG AWS_SECRET_ACCESS_KEY
-RUN terraform init
+ARG AWS_ROLE_ARN
+RUN terraform init -backend-config="role_arn=${AWS_ROLE_ARN}"
 RUN terraform fmt -check
 COPY --from=zip /var/task/dist/ /var/task/dist/
 ARG TF_VAR_VERSION
-RUN terraform plan -out terraform.zip
+RUN terraform plan -var="AWS_ROLE_ARN=${AWS_ROLE_ARN}" -out terraform.zip
 CMD ["apply", "terraform.zip"]
