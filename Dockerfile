@@ -24,6 +24,7 @@ ARG AWS_ACCESS_KEY_ID
 ARG AWS_DEFAULT_REGION=us-east-1
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_ROLE_ARN
+RUN echo "${AWS_ACCESS_KEY_ID}"
 RUN terraform init -backend-config="role_arn=${AWS_ROLE_ARN}" \
   -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
   -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}"
