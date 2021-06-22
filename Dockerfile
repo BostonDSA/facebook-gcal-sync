@@ -24,7 +24,9 @@ ARG AWS_ACCESS_KEY_ID
 ARG AWS_DEFAULT_REGION=us-east-1
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_ROLE_ARN
-RUN terraform init -backend-config="role_arn=${AWS_ROLE_ARN}"
+RUN terraform init -backend-config="role_arn=${AWS_ROLE_ARN}" \
+  -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
+  -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}"
 RUN terraform fmt -check
 COPY --from=zip /var/task/dist/ /var/task/dist/
 ARG TF_VAR_VERSION
