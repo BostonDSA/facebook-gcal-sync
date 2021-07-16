@@ -9,7 +9,6 @@ terraform {
 provider "aws" {
   region  = "us-east-1"
   version = "~> 3.0"
-  profile = var.AWS_PROFILE
   assume_role {
     role_arn = var.AWS_ROLE_ARN
   }
@@ -290,10 +289,6 @@ output "sync_function_name" {
 
 variable "VERSION" {
   description = "Release tag name"
-}
-
-variable "AWS_PROFILE" {
-  description = "AWS Profile"
 }
 
 variable "AWS_ROLE_ARN" {
