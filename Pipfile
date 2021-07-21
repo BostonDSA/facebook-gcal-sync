@@ -5,8 +5,14 @@ name = "pypi"
 
 [packages]
 fest = "*"
+pyactionnetwork = "*"
+requests = "*"
 
 [dev-packages]
 boto3 = "*"
 ipdb = "*"
 ipython = "*"
+pytest = "*"
+
+[requires]
+python_version = "3.7"

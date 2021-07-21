@@ -9,7 +9,6 @@ terraform {
 provider "aws" {
   region  = "us-east-1"
   version = "~> 3.0"
-  profile = var.AWS_PROFILE
   assume_role {
     role_arn = var.AWS_ROLE_ARN
   }
@@ -84,6 +83,7 @@ data "aws_iam_policy_document" "inline" {
     resources = [
       data.aws_secretsmanager_secret.facebook.arn,
       data.aws_secretsmanager_secret.google.arn,
+      data.aws_secretsmanager_secret.action_network.arn,
     ]
   }
 
@@ -120,6 +120,10 @@ data "aws_secretsmanager_secret" "facebook" {
 
 data "aws_secretsmanager_secret" "google" {
   name = "google/socialismbot"
+}
+
+data "aws_secretsmanager_secret" "action_network" {
+  name = "actionnetwork/BostonDSA"
 }
 
 data "aws_sns_topic" "socialismbot" {
@@ -177,13 +181,14 @@ resource "aws_lambda_function" "sync" {
 
   environment {
     variables = {
-      FACEBOOK_PAGE_ID   = local.facebook_page_id
-      FACEBOOK_SECRET    = data.aws_secretsmanager_secret.facebook.name
-      GOOGLE_CALENDAR_ID = local.google_calendar_id
-      GOOGLE_SECRET      = data.aws_secretsmanager_secret.google.name
-      SLACK_CHANNEL      = local.slack_channels["events"]
-      SLACK_FOOTER_URL   = local.repo
-      SLACK_TOPIC_ARN    = data.aws_sns_topic.socialismbot.arn
+      FACEBOOK_PAGE_ID      = local.facebook_page_id
+      FACEBOOK_SECRET       = data.aws_secretsmanager_secret.facebook.name
+      GOOGLE_CALENDAR_ID    = local.google_calendar_id
+      GOOGLE_SECRET         = data.aws_secretsmanager_secret.google.name
+      SLACK_CHANNEL         = local.slack_channels["events"]
+      SLACK_FOOTER_URL      = local.repo
+      SLACK_TOPIC_ARN       = data.aws_sns_topic.socialismbot.arn
+      ACTION_NETWORK_SECRET = data.aws_secretsmanager_secret.action_network.name
     }
   }
 }
@@ -284,10 +289,6 @@ output "sync_function_name" {
 
 variable "VERSION" {
   description = "Release tag name"
-}
-
-variable "AWS_PROFILE" {
-  description = "AWS Profile"
 }
 
 variable "AWS_ROLE_ARN" {
