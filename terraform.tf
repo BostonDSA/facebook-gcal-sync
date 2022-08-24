@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "terraform.bostondsa.org"
-    key    = "facebook-gcal-sync.tfstate"
+    key    = "actionnetwork-airtable-sync.tfstate"
     region = "us-east-1"
   }
 }
@@ -15,7 +15,7 @@ provider "aws" {
 }
 
 locals {
-  app_name                       = "facebook-gcal-sync"
+  app_name                       = "actionnetwork-airtable-sync"
   event_rule_schedule_expression = "rate(1 hour)"
   event_rule_is_enabled          = true
   facebook_page_id               = "BostonDSA"
@@ -174,7 +174,7 @@ resource "aws_lambda_function" "sync" {
   function_name    = local.app_name
   handler          = "sync.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   source_code_hash = filebase64sha256("dist/sync.zip")
   tags             = local.tags
   timeout          = 15
@@ -237,7 +237,7 @@ resource "aws_lambda_function" "alarm" {
   function_name    = "${local.app_name}-alarm"
   handler          = "alarm.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   source_code_hash = filebase64sha256("dist/alarm.zip")
   tags             = local.tags
 

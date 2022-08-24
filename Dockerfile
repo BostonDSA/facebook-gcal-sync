@@ -1,13 +1,15 @@
-ARG PYTHON=3.8
+ARG PYTHON=3.9
 ARG TERRAFORM=latest
 
-FROM lambci/lambda:build-python${PYTHON} AS lock
+FROM amazon/aws-lambda-python:${PYTHON} AS lock
+RUN pip install pipenv
 RUN pipenv lock 2>&1
 COPY Pipfile* /var/task/
-RUN pipenv lock -r > requirements-lock.txt
-RUN pipenv lock -r -d > requirements-dev-lock.txt
+RUN pipenv requirements > requirements-lock.txt
+RUN pipenv requirements --dev > requirements-dev-lock.txt
 
-FROM lambci/lambda:build-python${PYTHON} AS zip
+FROM amazon/aws-lambda-python:${PYTHON} AS zip
+RUN yum install -y git zip
 COPY src/sync.py .
 COPY --from=lock /var/task/ .
 RUN mkdir dist
