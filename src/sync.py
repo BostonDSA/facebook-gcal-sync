@@ -170,34 +170,6 @@ def handler(event, *_):
     actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
     actionnetwork.logger.setLevel('INFO')
 
-
-    # Sync
-    sync = gcal.sync(page, time_filter='upcoming').execute(dryrun=dryrun)
-    actionnetwork.sync(page).execute(dryrun=dryrun)
-
-    # Get Slack message
-    message = slack_message(sync.responses, channel, user)
-
-    # Post and return
-    print(f'MESSAGE {json.dumps(message)}')
-    if not dryrun and message['attachments']:
-        SNS.publish(
-            TopicArn=SLACK_TOPIC_ARN,
-            Message=json.dumps(message),
-            MessageAttributes={
-                'id': {
-                    'DataType': 'String',
-                    'StringValue': 'postMessage'
-                },
-                'type': {
-                    'DataType': 'String',
-                    'StringValue': 'chat'
-                }
-            }
-        )
-    return message
-
-
 if __name__ == '__main__':
     print(handler({
         'dryrun': True,
