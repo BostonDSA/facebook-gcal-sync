@@ -3,7 +3,6 @@ import requests
 
 CREATION_WINDOW_DAYS = 365
 
-
 class ActionNetwork(pyactionnetwork.ActionNetworkApi):
     def __init__(self, api_key):
         super().__init__(api_key)
@@ -22,10 +21,14 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
 
         return requests.get(url, params=params, headers=self.headers).json()
 
-    def iter_events(self, **kwargs):
+    def events(self, **kwargs):
         events_response = self._events(**kwargs)
-        yield from events_response['_embedded']['osdi:events'] or []
+        events = []
+        events += events_response['_embedded']['osdi:events'] or []
 
         while events_response['page'] < events_response['total_pages']:
+            print(f"Fetching event page {events_response['page']} out of {events_response['total_pages']}")
             events_response = requests.get(events_response['_links']['next']['href'], headers=self.headers).json()
-            yield from events_response['_embedded']['osdi:events'] or []
+            events += events_response['_embedded']['osdi:events'] or []
+
+        return events

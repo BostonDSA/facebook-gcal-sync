@@ -3,22 +3,11 @@ import os
 import urllib
 from datetime import date
 from datetime import datetime
+from pprint import pprint
 
 import boto3
-import facebook
-from google.oauth2 import service_account
-from googleapiclient import discovery
 from actionnetwork import ActionNetwork
 
-import pprint
-
-import fest
-
-FACEBOOK_PAGE_ID = os.environ['FACEBOOK_PAGE_ID']
-FACEBOOK_SECRET = os.environ['FACEBOOK_SECRET']
-GOOGLE_CALENDAR_ID = os.environ['GOOGLE_CALENDAR_ID']
-GOOGLE_SECRET = os.environ['GOOGLE_SECRET']
-ACTION_NETWORK_SECRET = os.environ['ACTION_NETWORK_SECRET']
 SLACK_CHANNEL = os.environ['SLACK_CHANNEL']
 SLACK_FOOTER_URL = os.environ['SLACK_FOOTER_URL']
 SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
@@ -27,28 +16,12 @@ SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
 SECRETSMANAGER = boto3.client('secretsmanager')
 SNS = boto3.client('sns')
 
-# Get facebook/Google secrets
-FACEBOOK_PAGE_TOKEN = \
-    SECRETSMANAGER.get_secret_value(SecretId=FACEBOOK_SECRET)['SecretString']
-GOOGLE_SERVICE_ACCOUNT = json.loads(
-    SECRETSMANAGER.get_secret_value(SecretId=GOOGLE_SECRET)['SecretString']
-)
-GOOGLE_CREDENTIALS = service_account.Credentials.from_service_account_info(
-    GOOGLE_SERVICE_ACCOUNT
-)
-
-ACTION_NETWORK_KEY = json.loads(
-    SECRETSMANAGER.get_secret_value(SecretId=ACTION_NETWORK_SECRET)['SecretString']
-)['api_key']
-
-# Get facebook/Google clients
-GRAPHAPI = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-CALENDARAPI = discovery.build(
-    'calendar', 'v3',
-    cache_discovery=False,
-    credentials=GOOGLE_CREDENTIALS,
-)
-
+ACTION_NETWORK_KEY = os.environ.get('ACTION_NETWORK_KEY')
+if not ACTION_NETWORK_KEY:
+    secret_id = os.environ('ACTION_NETWORK_SECRET_ID')
+    raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
+    secret = json.loads(raw_secret['SecretString'])
+    ACTION_NETWORK_KEY = secret['api_key']
 
 def event_time(time):
     try:
@@ -155,20 +128,14 @@ def handler(event, *_):
 
     # Get args from event
     event = event or {}
-    cal_id = event.get('calendarId') or GOOGLE_CALENDAR_ID
     channel = event.get('channel') or SLACK_CHANNEL
     dryrun = event.get('dryrun') or False
-    page_id = event.get('pageId') or FACEBOOK_PAGE_ID
     user = event.get('user')
 
-    # Initialize facebook page & Google Calendar
-    page = fest.FacebookPage(GRAPHAPI, page_id)
-    gcal = fest.GoogleCalendar(CALENDARAPI, cal_id)
-    page.logger.setLevel('INFO')
-    gcal.logger.setLevel('INFO')
-
     actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
-    actionnetwork.logger.setLevel('INFO')
+    events = [e for e in actionnetwork.events()]
+    pprint(events[0])
+
 
 if __name__ == '__main__':
     print(handler({
