@@ -7,6 +7,8 @@ from pprint import pprint
 
 import boto3
 from actionnetwork import ActionNetwork
+from airtable import Airtable
+from events import EventDiffer
 
 SLACK_CHANNEL = os.environ['SLACK_CHANNEL']
 SLACK_FOOTER_URL = os.environ['SLACK_FOOTER_URL']
@@ -22,6 +24,13 @@ if not ACTION_NETWORK_KEY:
     raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
     secret = json.loads(raw_secret['SecretString'])
     ACTION_NETWORK_KEY = secret['api_key']
+
+AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
+if not AIRTABLE_API_KEY:
+    secret_id = os.environ['AIRTABLE_SECRET_ID']
+    raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
+    secret = json.loads(raw_secret['SecretString'])
+    AIRTABLE_API_KEY = secret['api_key']
 
 def event_time(time):
     try:
@@ -133,13 +142,33 @@ def handler(event, *_):
     user = event.get('user')
 
     actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
-    events = [e for e in actionnetwork.events()]
-    pprint(events[0])
+    actionnetwork_events = actionnetwork.events()
 
+    airtable = Airtable(AIRTABLE_API_KEY)
+    airtable_events = airtable.events()
+
+    differ = EventDiffer(
+        events_from_source=actionnetwork_events,
+        events_at_destination=airtable_events
+    )
+    differ.diff_events()
+
+    new_events = differ.events_to_add()
+    changed_events = differ.events_to_update()
+    removed_events = differ.events_to_delete()
+
+    print(new_events)
+    print(changed_events)
+    print(removed_events)
+
+    if not dryrun:
+        airtable.add_events(new_events)
+        airtable.update_events(changed_events)
+        airtable.delete_events(removed_events)
 
 if __name__ == '__main__':
-    print(handler({
+    handler({
         'dryrun': True,
         'user': 'U7P1MU20P',
         'channel': 'GB1SLKKL7',
-    }))
+    })
