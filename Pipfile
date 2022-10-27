@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+fest = "*"
 pyactionnetwork = "*"
 requests = "*"
 
@@ -14,8 +15,4 @@ ipython = "*"
 pytest = "*"
 
 [requires]
-python_version = "3.9"
-
-[packages.fest]
-git = "https://github.com/BostonDSA/fest.git"
-editable = true
+python_version = "3.7"
