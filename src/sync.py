@@ -173,7 +173,6 @@ def handler(event, *_):
 
     # Sync
     sync = gcal.sync(page, time_filter='upcoming').execute(dryrun=dryrun)
-    actionnetwork.sync(page).execute(dryrun=dryrun)
 
     # Get Slack message
     message = slack_message(sync.responses, channel, user)
