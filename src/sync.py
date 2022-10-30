@@ -8,7 +8,6 @@ import boto3
 import facebook
 from google.oauth2 import service_account
 from googleapiclient import discovery
-from actionnetwork import ActionNetwork
 
 import pprint
 
@@ -18,7 +17,6 @@ FACEBOOK_PAGE_ID = os.environ['FACEBOOK_PAGE_ID']
 FACEBOOK_SECRET = os.environ['FACEBOOK_SECRET']
 GOOGLE_CALENDAR_ID = os.environ['GOOGLE_CALENDAR_ID']
 GOOGLE_SECRET = os.environ['GOOGLE_SECRET']
-ACTION_NETWORK_SECRET = os.environ['ACTION_NETWORK_SECRET']
 SLACK_CHANNEL = os.environ['SLACK_CHANNEL']
 SLACK_FOOTER_URL = os.environ['SLACK_FOOTER_URL']
 SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
@@ -36,10 +34,6 @@ GOOGLE_SERVICE_ACCOUNT = json.loads(
 GOOGLE_CREDENTIALS = service_account.Credentials.from_service_account_info(
     GOOGLE_SERVICE_ACCOUNT
 )
-
-ACTION_NETWORK_KEY = json.loads(
-    SECRETSMANAGER.get_secret_value(SecretId=ACTION_NETWORK_SECRET)['SecretString']
-)['api_key']
 
 # Get facebook/Google clients
 GRAPHAPI = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
@@ -166,10 +160,6 @@ def handler(event, *_):
     gcal = fest.GoogleCalendar(CALENDARAPI, cal_id)
     page.logger.setLevel('INFO')
     gcal.logger.setLevel('INFO')
-
-    actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
-    actionnetwork.logger.setLevel('INFO')
-
 
     # Sync
     sync = gcal.sync(page, time_filter='upcoming').execute(dryrun=dryrun)
