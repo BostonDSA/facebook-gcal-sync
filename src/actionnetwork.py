@@ -1,5 +1,6 @@
 import pyactionnetwork
 import requests
+from events import ActionNetworkEvent
 
 CREATION_WINDOW_DAYS = 365
 
@@ -31,4 +32,4 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
             events_response = requests.get(events_response['_links']['next']['href'], headers=self.headers).json()
             events += events_response['_embedded']['osdi:events'] or []
 
-        return events
+        return [ActionNetworkEvent(raw_event) for raw_event in events]
