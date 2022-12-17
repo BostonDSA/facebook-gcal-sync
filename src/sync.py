@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import urllib
@@ -167,8 +168,21 @@ def handler(event, *_):
         airtable.delete_events(removed_events)
 
 if __name__ == '__main__':
-    handler({
-        'dryrun': True,
-        'user': 'U7P1MU20P',
-        'channel': 'GB1SLKKL7',
-    })
+    parser = argparse.ArgumentParser(
+                    prog = 'ActionNetwork',
+                    description = 'Syncs events from ActionNetwork to Airtable')
+    parser.add_argument('-e', '--event', required=False)
+    parser.add_argument('-s', '--sync', action='store_true')
+    args = parser.parse_args()
+
+    if args.event:
+        if args.sync:
+            sync_single_event(args.event)
+        else:
+            pprint(get_single_event(args.event))
+    else:
+        handler({
+            'dryrun': True,
+            'user': 'U7P1MU20P',
+            'channel': 'GB1SLKKL7',
+        })
