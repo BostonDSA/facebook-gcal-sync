@@ -179,6 +179,10 @@ class AirtableEvent(Event):
     def airtable_id(self):
         return self.lookup('id')
 
+    @airtable_id.setter
+    def airtable_id(self, airtable_id):
+        self.set(airtable_id, 'id')
+
     @property
     def updated_at(self):
         return self.lookup('fields', 'modified')
