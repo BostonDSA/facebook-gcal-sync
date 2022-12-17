@@ -185,6 +185,13 @@ class AirtableEvent(Event):
     def start(self, start):
         return self.set(start, 'fields', 'Start')
 
+    @property
+    def location(self):
+        return self.lookup('fields', 'Location')
+
+    @location.setter
+    def location(self, location):
+        return self.set(location, 'fields', 'Location')
 
 class ActionNetworkEvent(Event):
     PRIMARY_ID_NAME = 'actionnetwork_id'
@@ -210,6 +217,29 @@ class ActionNetworkEvent(Event):
     @property
     def start(self):
         return self.lookup('start_date')
+
+    @property
+    def location(self):
+        loc = self.lookup('location')
+
+        venue = loc['venue'] if 'venue' in loc else ''
+        addr = ' '.join(loc['address_lines']) if 'address_lines' in loc else ''
+        city = loc['locality'] if 'locality' in loc else ''
+        state = loc['region'] if 'region' in loc else ''
+        zipcode = loc['postal_code'] if 'postal_code' in loc else ''
+
+        str_loc = f'{venue}, {addr}, {city} {state}, {zipcode}'
+
+        # I didn't find any flag that indicates the event is online.
+        # Just looking at the data they all seem to have the same
+        # lat/long so using that for now.
+        if loc['location']:
+            lat = loc['location']['latitude']
+            long = loc['location']['longitude']
+            if lat == 39.7837304 and long == -100.445882:
+                str_loc = 'Online'
+
+        return str_loc
 
 
 class EventDiffer():
