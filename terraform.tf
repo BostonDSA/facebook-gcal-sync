@@ -188,7 +188,7 @@ resource "aws_lambda_function" "sync" {
       SLACK_CHANNEL         = local.slack_channels["events"]
       SLACK_FOOTER_URL      = local.repo
       SLACK_TOPIC_ARN       = data.aws_sns_topic.socialismbot.arn
-      ACTION_NETWORK_SECRET = data.aws_secretsmanager_secret.action_network.name
+      ACTION_NETWORK_KEY = data.aws_secretsmanager_secret.action_network.name
     }
   }
 }
