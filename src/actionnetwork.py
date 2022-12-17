@@ -33,3 +33,9 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
             events += events_response['_embedded']['osdi:events'] or []
 
         return [ActionNetworkEvent(raw_event) for raw_event in events]
+
+    def event(self, event_id):
+        url = self.resource_to_url('events')
+        url += '/' + event_id
+        return ActionNetworkEvent(requests.get(url, headers=self.headers).json())
+

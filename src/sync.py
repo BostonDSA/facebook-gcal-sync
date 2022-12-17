@@ -21,7 +21,7 @@ SNS = boto3.client('sns')
 
 ACTION_NETWORK_KEY = os.environ.get('ACTION_NETWORK_KEY')
 if not ACTION_NETWORK_KEY:
-    secret_id = os.environ('ACTION_NETWORK_SECRET_ID')
+    secret_id = os.environ.get('ACTION_NETWORK_SECRET_ID')
     raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
     secret = json.loads(raw_secret['SecretString'])
     ACTION_NETWORK_KEY = secret['api_key']
@@ -167,6 +167,34 @@ def handler(event, *_):
         airtable.update_events(changed_events)
         airtable.delete_events(removed_events)
 
+def get_single_event(event_id):
+    actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
+    return actionnetwork.event(event_id)
+
+def sync_single_event(event_id):
+    event = get_single_event(event_id)
+    actionnetwork_events = [event]
+    airtable = Airtable(AIRTABLE_API_KEY)
+    airtable_events = airtable.events()
+
+    differ = EventDiffer(
+        events_from_source=actionnetwork_events,
+        events_at_destination=airtable_events
+    )
+    differ.diff_events()
+
+    new_events = differ.events_to_add()
+    changed_events = differ.events_to_update()
+    removed_events = differ.events_to_delete()
+
+    print(new_events)
+    print(changed_events)
+    print(removed_events)
+
+    airtable.add_events(new_events)
+    airtable.update_events(changed_events)
+    airtable.delete_events(removed_events)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
                     prog = 'ActionNetwork',
@@ -179,7 +207,7 @@ if __name__ == '__main__':
         if args.sync:
             sync_single_event(args.event)
         else:
-            pprint(get_single_event(args.event))
+            pprint(get_single_event(args.event).raw)
     else:
         handler({
             'dryrun': True,
