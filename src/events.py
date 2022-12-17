@@ -1,4 +1,7 @@
 from abc import ABC
+from datetime import datetime, timedelta
+
+from pytz import timezone
 
 class Event(ABC):
     """Abstract base class for Event types.
@@ -136,6 +139,33 @@ class Event(ABC):
         }
         return new_class.build(new_event_values)
 
+    @classmethod
+    def to_datetime(cls, raw_time):
+        """Translates an event type's native time format into a python datetime.
+
+        We define helpers in the base Event class to prevent the subclass
+        helpers won't be counted as event_fields.
+
+        :param raw_time: an object representing a time value, in whatever format
+            the event type uses to store time values
+        :return: a python datetime object representing the same time
+        :rtype: datetime
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def from_datetime(cls, dt):
+        """Translates a datetime into the event type's native time format.
+
+        We define helpers in the base Event class to prevent the subclass
+        helpers won't be counted as event_fields.
+
+        :param dt: a python datetime object representing a time
+        :return: an object representing a time value, in whatever format
+            the event type uses to store time values
+        """
+        raise NotImplementedError
+
 
 class AirtableEvent(Event):
     REQUIRED_FIELD_NAMES = {
@@ -179,11 +209,34 @@ class AirtableEvent(Event):
 
     @property
     def start(self):
-        return self.lookup('fields', 'Start')
+        return AirtableEvent.to_datetime(self.lookup('fields', 'Start Time'))
 
     @start.setter
     def start(self, start):
-        return self.set(start, 'fields', 'Start')
+        start_str = AirtableEvent.from_datetime(start)
+        return self.set(start_str, 'fields', 'Start Time')
+
+    @property
+    def end(self):
+        return AirtableEvent.to_datetime(self.lookup('fields', 'End Time'))
+
+    @end.setter
+    def end(self, end):
+        return self.set(AirtableEvent.from_datetime(end), 'fields', 'End Time')
+
+    @classmethod
+    def to_datetime(cls, raw_time):
+        # This function must be null-safe because raw_time will be None if
+        # we are creating the object from scratch.
+        if raw_time is None:
+            dt = None
+        else:
+            dt = datetime.fromisoformat(raw_time)
+        return dt
+
+    @classmethod
+    def from_datetime(cls, dt):
+        return dt.isoformat()
 
     @property
     def location(self):
@@ -216,7 +269,30 @@ class ActionNetworkEvent(Event):
 
     @property
     def start(self):
-        return self.lookup('start_date')
+        raw_start = self.lookup('start_date')
+        return ActionNetworkEvent.to_datetime(raw_start)
+
+    @property
+    def end(self):
+        raw_end = self.lookup('end_date')
+        if raw_end is None:
+            end = self.start + timedelta(hours=1)
+        else:
+            end = ActionNetworkEvent.to_datetime(raw_end)
+        return end
+
+    @classmethod
+    def to_datetime(cls, raw_time):
+        # ActionNetwork seems to give us timestamps with a trailing 'Z' which
+        # indicates UTC, but the times are whatever the user entered, verbatim,
+        # regardless of timezone. Strip the Z to get valid ISO
+        naieve_time = datetime.fromisoformat(raw_time[:-1])
+        # Assume that the user entered eastern time. If this turns out to
+        # be unreliable, we can look into deriving timezone from location.
+        # If an event is virtual (no location) ActionNetwork requires the
+        # user to enter a timezone manually, but this does not seem to
+        # appear in the API response
+        return timezone('US/Eastern').localize(naieve_time)
 
     @property
     def location(self):
