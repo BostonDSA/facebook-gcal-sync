@@ -185,15 +185,12 @@ def sync_single_event(event_id):
 
     new_events = differ.events_to_add()
     changed_events = differ.events_to_update()
-    removed_events = differ.events_to_delete()
 
     print(new_events)
     print(changed_events)
-    print(removed_events)
 
     airtable.add_events(new_events)
     airtable.update_events(changed_events)
-    airtable.delete_events(removed_events)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
