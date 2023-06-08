@@ -1,7 +1,6 @@
 import pyairtable
 from events import AirtableEvent
 
-BASE_ID = "appt5WkXVfwvdG1nd"
 TABLE_NAME = "Events"
 
 class Airtable(pyairtable.Table):
@@ -12,8 +11,8 @@ class Airtable(pyairtable.Table):
     is responsible for translating AirtableEvent objects into (or from) a
     format the API requires and calling the API functions.
     """
-    def __init__(self, api_key: str):
-        super().__init__(api_key, BASE_ID, TABLE_NAME)
+    def __init__(self, api_key: str, base_id: str):
+        super().__init__(api_key, base_id, TABLE_NAME)
 
     def events(self) -> list[AirtableEvent]:
         return [AirtableEvent(event) for event in super().all()]
