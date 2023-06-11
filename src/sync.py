@@ -26,6 +26,7 @@ if not ACTION_NETWORK_KEY:
     secret = json.loads(raw_secret['SecretString'])
     ACTION_NETWORK_KEY = secret['api_key']
 
+AIRTABLE_BASE_ID = os.environ.get('AIRTABLE_BASE_ID')
 AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
 if not AIRTABLE_API_KEY:
     secret_id = os.environ['AIRTABLE_SECRET_ID']
@@ -145,7 +146,7 @@ def handler(event, *_):
     actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
     actionnetwork_events = actionnetwork.events()
 
-    airtable = Airtable(AIRTABLE_API_KEY)
+    airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
     airtable_events = airtable.events()
 
     differ = EventDiffer(
