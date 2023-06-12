@@ -7,6 +7,7 @@ from datetime import datetime
 from pprint import pprint
 
 import boto3
+
 from actionnetwork import ActionNetwork
 from airtable import Airtable
 from events import EventDiffer

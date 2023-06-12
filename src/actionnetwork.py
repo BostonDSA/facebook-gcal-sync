@@ -22,7 +22,7 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
 
         return requests.get(url, params=params, headers=self.headers).json()
 
-    def events(self, **kwargs):
+    def raw_events(self, **kwargs):
         events_response = self._events(**kwargs)
         events = []
         events += events_response['_embedded']['osdi:events'] or []
@@ -32,10 +32,17 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
             events_response = requests.get(events_response['_links']['next']['href'], headers=self.headers).json()
             events += events_response['_embedded']['osdi:events'] or []
 
-        return [ActionNetworkEvent(raw_event) for raw_event in events]
+        return events
+
+    def events(self, **kwargs):
+        """Get events as ActionNetworkEvents, filter out unwanted events"""
+        return [
+            ActionNetworkEvent(raw_event)
+            for raw_event in self.raw_events(**kwargs)
+            if raw_event['origin_system'] != 'Facebook Sync'
+        ]
 
     def event(self, event_id):
         url = self.resource_to_url('events')
         url += '/' + event_id
         return ActionNetworkEvent(requests.get(url, headers=self.headers).json())
-
