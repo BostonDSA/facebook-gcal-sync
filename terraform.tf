@@ -181,13 +181,13 @@ resource "aws_lambda_function" "sync" {
 
   environment {
     variables = {
-      FACEBOOK_PAGE_ID      = local.facebook_page_id
-      FACEBOOK_SECRET       = data.aws_secretsmanager_secret.facebook.name
-      GOOGLE_CALENDAR_ID    = local.google_calendar_id
-      GOOGLE_SECRET         = data.aws_secretsmanager_secret.google.name
-      SLACK_CHANNEL         = local.slack_channels["events"]
-      SLACK_FOOTER_URL      = local.repo
-      SLACK_TOPIC_ARN       = data.aws_sns_topic.socialismbot.arn
+      FACEBOOK_PAGE_ID   = local.facebook_page_id
+      FACEBOOK_SECRET    = data.aws_secretsmanager_secret.facebook.name
+      GOOGLE_CALENDAR_ID = local.google_calendar_id
+      GOOGLE_SECRET      = data.aws_secretsmanager_secret.google.name
+      SLACK_CHANNEL      = local.slack_channels["events"]
+      SLACK_FOOTER_URL   = local.repo
+      SLACK_TOPIC_ARN    = data.aws_sns_topic.socialismbot.arn
       ACTION_NETWORK_KEY = data.aws_secretsmanager_secret.action_network.name
     }
   }
