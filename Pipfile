@@ -7,13 +7,13 @@ name = "pypi"
 pyactionnetwork = "*"
 pyairtable = "*"
 requests = "*"
-pytz = "*"
 
 [dev-packages]
 boto3 = "*"
 ipdb = "*"
 ipython = "*"
 pytest = "*"
+pytz = "*"
 
 [requires]
 python_version = "3.9"

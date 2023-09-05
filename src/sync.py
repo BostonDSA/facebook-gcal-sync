@@ -160,9 +160,10 @@ def handler(event, *_):
     changed_events = differ.events_to_update()
     removed_events = differ.events_to_delete()
 
-    print(new_events)
-    print(changed_events)
-    print(removed_events)
+    print(f"All events retrieved from ActionNetwork: {actionnetwork_events}")
+    print(f"New events: {new_events}")
+    print(f"Changed events: {changed_events}")
+    print(f"Removed events: {removed_events}")
 
     if not dryrun:
         airtable.add_events(new_events)
@@ -176,7 +177,7 @@ def get_single_event(event_id):
 def sync_single_event(event_id):
     event = get_single_event(event_id)
     actionnetwork_events = [event]
-    airtable = Airtable(AIRTABLE_API_KEY)
+    airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
     airtable_events = airtable.events()
 
     differ = EventDiffer(
@@ -209,7 +210,7 @@ if __name__ == '__main__':
             pprint(get_single_event(args.event).raw)
     else:
         handler({
-            'dryrun': True,
+            'dryrun': True, # False,
             'user': 'U7P1MU20P',
             'channel': 'GB1SLKKL7',
         })
