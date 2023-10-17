@@ -311,13 +311,11 @@ class ActionNetworkEvent(Event):
         str_loc = f'{venue}, {addr}, {city} {state}, {zipcode}'
 
         # I didn't find any flag that indicates the event is online.
-        # Just looking at the data they all seem to have the same
-        # lat/long so using that for now.
-        if loc['location']:
-            lat = loc['location']['latitude']
-            long = loc['location']['longitude']
-            if lat == 39.7837304 and long == -100.445882:
-                str_loc = 'Online'
+        # Online events seemed to have the same lat/long, so we tried using that,
+        # but it wasn't always true, so some of our online event locations were just commas.
+        # Instead we'll try checking if they have no address.
+        if venue == '' and addr == '' and city == '' and state == '' and zipcode == '':
+            str_loc = 'Online'
 
         return str_loc
 
