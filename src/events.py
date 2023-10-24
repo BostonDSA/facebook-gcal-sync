@@ -1,7 +1,6 @@
 from abc import ABC
 from datetime import datetime, timedelta
-
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 class Event(ABC):
     """Abstract base class for Event types.
@@ -165,22 +164,27 @@ class Event(ABC):
     def to_datetime(cls, raw_time):
         """Translates an event type's native time format into a python datetime.
 
-        We define helpers in the base Event class to prevent the subclass
-        helpers won't be counted as event_fields.
-
         :param raw_time: an object representing a time value, in whatever format
             the event type uses to store time values
         :return: a python datetime object representing the same time
         :rtype: datetime
         """
-        raise NotImplementedError
+        # This function must be null-safe because raw_time will be None if
+        # we are creating the object from scratch.
+        if raw_time is None:
+            dt = None
+        # ActionNetwork and Airtable both appear to give us times as ISO
+        # formatted strings, so use this as the default read behavior
+        else:
+            dt = datetime.fromisoformat(raw_time)
+        return dt  
 
     @classmethod
     def from_datetime(cls, dt):
         """Translates a datetime into the event type's native time format.
 
         We define helpers in the base Event class to prevent the subclass
-        helpers won't be counted as event_fields.
+        helpers from being counted in event_fields
 
         :param dt: a python datetime object representing a time
         :return: an object representing a time value, in whatever format
@@ -259,17 +263,11 @@ class AirtableEvent(Event):
         return self.set(AirtableEvent.from_datetime(end), 'fields', 'End Time')
 
     @classmethod
-    def to_datetime(cls, raw_time):
-        # This function must be null-safe because raw_time will be None if
-        # we are creating the object from scratch.
-        if raw_time is None:
-            dt = None
-        else:
-            dt = datetime.fromisoformat(raw_time)
-        return dt
-
-    @classmethod
     def from_datetime(cls, dt):
+        # Airtable can accept formatted date strings including timezone.
+        # Our Airtable date columns are formatted to use eastern time, and
+        # any values will be converted accordingly. As long as the source
+        # uses eastern time, these will compare consistently
         return dt.isoformat()
 
     @property
@@ -321,16 +319,15 @@ class ActionNetworkEvent(Event):
 
     @classmethod
     def to_datetime(cls, raw_time):
-        # ActionNetwork seems to give us timestamps with a trailing 'Z' which
-        # indicates UTC, but the times are whatever the user entered, verbatim,
-        # regardless of timezone. Strip the Z to get valid ISO
-        naieve_time = datetime.fromisoformat(raw_time[:-1])
-        # Assume that the user entered eastern time. If this turns out to
-        # be unreliable, we can look into deriving timezone from location.
+        # ActionNetwork gives us time strings that are encoded as UTC but
+        # are actually naieve time (exactly as the user entered). We assume
+        # that the user wanted eastern time - If this turns out to be
+        # unreliable, we can look into deriving timezone from location.
         # If an event is virtual (no location) ActionNetwork requires the
         # user to enter a timezone manually, but this does not seem to
-        # appear in the API response
-        return timezone('US/Eastern').localize(naieve_time)
+        # appear in the API response, so we treat it the same way.
+        time_with_utc_zone = super().to_datetime(raw_time)
+        return time_with_utc_zone.replace(tzinfo=ZoneInfo("America/New_York"))
 
     @property
     def location(self):
