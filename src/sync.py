@@ -159,7 +159,7 @@ def handler(event, *_):
         events_from_source=actionnetwork_events,
         events_at_destination=airtable_events
     )
-    differ.diff_events()
+    differ.match_events()
 
     new_events = differ.events_to_add()
     changed_events = differ.events_to_update()

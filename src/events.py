@@ -42,6 +42,12 @@ class Event(ABC):
         else:
             self.raw = {}
 
+    def __eq__(self, other):
+        return (
+            type(self) == type(other) and
+            self.event_info() == other.event_info()
+        )
+
     def __repr__(self):
         primary_id = getattr(self, self.PRIMARY_ID_NAME)
         return super().__repr__().replace(
@@ -117,12 +123,25 @@ class Event(ABC):
 
     @classmethod
     def event_fields(cls):
-        """Get the names of all properties belonging to a specific event class.
+        """Get the names of all properties containing information about the
+        event.
 
         :return: set of property names
         :rtype: set
         """
-        return set(dir(cls)) - set(dir(Event))
+        return set(dir(cls)) - set(dir(Event)) - cls.DERIVED_FIELD_NAMES
+    
+    def event_info(self):
+        """Get the names and values of all properties containing information
+        about the event record itself.
+
+        :return: dictionary of event information
+        :rtype: dict
+        """
+        return { 
+            field: getattr(self, field)
+            for field in self.__class__.event_fields() 
+        }
 
     def translate_to(self, new_class):
         """Translate the event object to a different event format.
@@ -132,12 +151,7 @@ class Event(ABC):
         :return: new event with all fields carried over (as  permitted)
         :rtype: Event
         """
-        new_event_values = {
-            field: getattr(self, field)
-            for field in self.__class__.event_fields()
-            if field not in new_class.DERIVED_FIELD_NAMES
-        }
-        return new_class.build(new_event_values)
+        return new_class.build(self.event_info())
 
     @classmethod
     def to_datetime(cls, raw_time):
@@ -402,8 +416,9 @@ class EventDiffer():
             if getattr(e, self.common_id_name) is not None
         }
 
-    def diff_events(self):
-        """Compute the diffs and store in instance variables.
+    def match_events(self):
+        """Match up events across the source and destination systems and
+        store in instance variables.
 
         Must be run before accessing the change sets (events_to_add, etc).
         """
@@ -411,17 +426,16 @@ class EventDiffer():
         dest_events = self._events_by_common_id(self.events_at_destination)
 
         not_in_destination = []
-        updated_pairs = []
+        present_in_both = []
         for common_id, source_event in source_events.items():
             if common_id in dest_events:
                 dest_event = dest_events.pop(common_id)
-                if dest_event.updated_at < source_event.updated_at:
-                    updated_pairs.append([dest_event, source_event])
+                present_in_both.append([dest_event, source_event])
             else:
                 not_in_destination.append(source_event)
 
         self.new_source_events = not_in_destination
-        self.updated_source_dest_event_pairs = updated_pairs
+        self.matching_source_dest_event_pairs = present_in_both
         self.dest_events_removed_from_source = list(dest_events.values())
 
     def events_to_add(self):
@@ -442,10 +456,11 @@ class EventDiffer():
         :return: list of destination-type events
         """
         events_to_update = []
-        for dest_event, source_event in self.updated_source_dest_event_pairs:
+        for dest_event, source_event in self.matching_source_dest_event_pairs:
             event = source_event.translate_to(self.destination_class)
             event.primary_id = dest_event.primary_id
-            events_to_update.append(event)
+            if dest_event != event:
+                events_to_update.append(event)
         return events_to_update
 
     def events_to_delete(self):
