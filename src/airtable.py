@@ -11,8 +11,8 @@ class Airtable(pyairtable.Table):
     is responsible for translating AirtableEvent objects into (or from) a
     format the API requires and calling the API functions.
     """
-    def __init__(self, api_key: str, base_id: str):
-        super().__init__(api_key, base_id, TABLE_NAME)
+    def __init__(self, personal_access_token: str, base_id: str):
+        super().__init__(personal_access_token, base_id, TABLE_NAME)
 
     def events(self) -> list[AirtableEvent]:
         return [AirtableEvent(event) for event in super().all()]

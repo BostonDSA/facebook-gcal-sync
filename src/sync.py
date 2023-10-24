@@ -26,13 +26,14 @@ if not ACTION_NETWORK_GROUP_KEY_MAP:
     raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
     ACTION_NETWORK_GROUP_KEY_MAP = json.loads(raw_secret['SecretString'])
 
+AIRTABLE_PERSONAL_ACCESS_TOKEN = os.environ.get('AIRTABLE_PERSONAL_ACCESS_TOKEN')
 AIRTABLE_BASE_ID = os.environ.get('AIRTABLE_BASE_ID')
-AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
-if not AIRTABLE_API_KEY:
+if not AIRTABLE_PERSONAL_ACCESS_TOKEN and not AIRTABLE_BASE_ID:
     secret_id = os.environ['AIRTABLE_SECRET_ID']
     raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
     secret = json.loads(raw_secret['SecretString'])
-    AIRTABLE_API_KEY = secret['api_key']
+    AIRTABLE_PERSONAL_ACCESS_TOKEN = secret['personal_access_token']
+    AIRTABLE_BASE_ID = secret['base_id']
 
 def event_time(time):
     try:
@@ -152,7 +153,7 @@ def handler(event, *_):
         actionnetwork = ActionNetwork(actionnetwork_key)
         actionnetwork_events.extend(actionnetwork.events())
 
-    airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
+    airtable = Airtable(AIRTABLE_PERSONAL_ACCESS_TOKEN, AIRTABLE_BASE_ID)
     airtable_events = airtable.events()
 
     differ = EventDiffer(
