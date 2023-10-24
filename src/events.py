@@ -1,7 +1,6 @@
 from abc import ABC
 from datetime import datetime, timedelta
-
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 class Event(ABC):
     """Abstract base class for Event types.
@@ -42,11 +41,25 @@ class Event(ABC):
         else:
             self.raw = {}
 
+    def __eq__(self, other):
+        return (
+            type(self) == type(other) and
+            self.event_info() == other.event_info()
+        )
+
     def __repr__(self):
         primary_id = getattr(self, self.PRIMARY_ID_NAME)
         return super().__repr__().replace(
             "object", f"{primary_id}|'{self.title}'"
         )
+
+    def print_diff(self, other):
+        print(f"\nDifferences in Event: {self}")
+        for field in self.event_fields().union(other.event_fields()):
+            self_value = self.event_info()[field]
+            other_value = other.event_info()[field]
+            if self_value != other_value:
+                print(f"Field {field}: {self_value} >> {other_value}")
 
     @property
     def primary_id(self):
@@ -117,12 +130,25 @@ class Event(ABC):
 
     @classmethod
     def event_fields(cls):
-        """Get the names of all properties belonging to a specific event class.
+        """Get the names of all properties containing information about the
+        event.
 
         :return: set of property names
         :rtype: set
         """
-        return set(dir(cls)) - set(dir(Event))
+        return set(dir(cls)) - set(dir(Event)) - cls.DERIVED_FIELD_NAMES
+
+    def event_info(self):
+        """Get the names and values of all properties containing information
+        about the event record itself.
+
+        :return: dictionary of event information
+        :rtype: dict
+        """
+        return {
+            field: getattr(self, field)
+            for field in self.__class__.event_fields()
+        }
 
     def translate_to(self, new_class):
         """Translate the event object to a different event format.
@@ -132,33 +158,33 @@ class Event(ABC):
         :return: new event with all fields carried over (as  permitted)
         :rtype: Event
         """
-        new_event_values = {
-            field: getattr(self, field)
-            for field in self.__class__.event_fields()
-            if field not in new_class.DERIVED_FIELD_NAMES
-        }
-        return new_class.build(new_event_values)
+        return new_class.build(self.event_info())
 
     @classmethod
     def to_datetime(cls, raw_time):
         """Translates an event type's native time format into a python datetime.
-
-        We define helpers in the base Event class to prevent the subclass
-        helpers won't be counted as event_fields.
 
         :param raw_time: an object representing a time value, in whatever format
             the event type uses to store time values
         :return: a python datetime object representing the same time
         :rtype: datetime
         """
-        raise NotImplementedError
+        # This function must be null-safe because raw_time will be None if
+        # we are creating the object from scratch.
+        if raw_time is None:
+            dt = None
+        # ActionNetwork and Airtable both appear to give us times as ISO
+        # formatted strings, so use this as the default read behavior
+        else:
+            dt = datetime.fromisoformat(raw_time)
+        return dt
 
     @classmethod
     def from_datetime(cls, dt):
         """Translates a datetime into the event type's native time format.
 
         We define helpers in the base Event class to prevent the subclass
-        helpers won't be counted as event_fields.
+        helpers from being counted in event_fields
 
         :param dt: a python datetime object representing a time
         :return: an object representing a time value, in whatever format
@@ -205,16 +231,23 @@ class AirtableEvent(Event):
 
     @property
     def description(self):
-        return self.lookup('fields', 'Description')
+        desc = self.lookup('fields', 'Description')
+        # When reading or comparing descriptions, ignore extra whitespace
+        # inserted by the Airtable platform
+        return desc.strip() if desc else desc
 
     @description.setter
     def description(self, description):
-        self.set(description, 'fields', 'Description')
+        # Airtable forums state that long text fields can store up to 100,000
+        # characters. Some of our ActionNetwork descriptions exceed this
+        # (primarily due to embedded images). For now, simply truncate to fit
+        airtable_desc = description[0:50000]
+        self.set(airtable_desc, 'fields', 'Description')
 
     @property
     def host_group(self):
         return self.lookup('fields', 'Host Group')
-    
+
     @host_group.setter
     def host_group(self, group_name):
         return self.set(group_name, 'fields', 'Host Group')
@@ -237,17 +270,11 @@ class AirtableEvent(Event):
         return self.set(AirtableEvent.from_datetime(end), 'fields', 'End Time')
 
     @classmethod
-    def to_datetime(cls, raw_time):
-        # This function must be null-safe because raw_time will be None if
-        # we are creating the object from scratch.
-        if raw_time is None:
-            dt = None
-        else:
-            dt = datetime.fromisoformat(raw_time)
-        return dt
-
-    @classmethod
     def from_datetime(cls, dt):
+        # Airtable can accept formatted date strings including timezone.
+        # Our Airtable date columns are formatted to use eastern time, and
+        # any values will be converted accordingly. As long as the source
+        # uses eastern time, these will compare consistently
         return dt.isoformat()
 
     @property
@@ -278,7 +305,7 @@ class ActionNetworkEvent(Event):
     @property
     def description(self):
         return self.lookup('description')
-    
+
     @property
     def host_group(self):
         return self.lookup('action_network:sponsor', 'title')
@@ -299,16 +326,15 @@ class ActionNetworkEvent(Event):
 
     @classmethod
     def to_datetime(cls, raw_time):
-        # ActionNetwork seems to give us timestamps with a trailing 'Z' which
-        # indicates UTC, but the times are whatever the user entered, verbatim,
-        # regardless of timezone. Strip the Z to get valid ISO
-        naieve_time = datetime.fromisoformat(raw_time[:-1])
-        # Assume that the user entered eastern time. If this turns out to
-        # be unreliable, we can look into deriving timezone from location.
+        # ActionNetwork gives us time strings that are encoded as UTC but
+        # are actually naieve time (exactly as the user entered). We assume
+        # that the user wanted eastern time - If this turns out to be
+        # unreliable, we can look into deriving timezone from location.
         # If an event is virtual (no location) ActionNetwork requires the
         # user to enter a timezone manually, but this does not seem to
-        # appear in the API response
-        return timezone('US/Eastern').localize(naieve_time)
+        # appear in the API response, so we treat it the same way.
+        time_with_utc_zone = super().to_datetime(raw_time)
+        return time_with_utc_zone.replace(tzinfo=ZoneInfo("America/New_York"))
 
     @property
     def location(self):
@@ -320,14 +346,19 @@ class ActionNetworkEvent(Event):
         state = loc['region'] if 'region' in loc else ''
         zipcode = loc['postal_code'] if 'postal_code' in loc else ''
 
-        str_loc = f'{venue}, {addr}, {city} {state}, {zipcode}'
+        # Only include parts of the address that have non-whitespace content.
+        # Sometimes, hosts enter just the venue title such as 'Zoom' or
+        # 'City Hall'
+        str_loc = ", ".join([
+            part for part in [venue, addr, f'{city} {state}', zipcode]
+            if part.strip()
+        ])
 
-        # I didn't find any flag that indicates the event is online.
+        # There is no flag that indicates the event is online.
         # Online events seemed to have the same lat/long, so we tried using that,
-        # but it wasn't always true, so some of our online event locations were just commas.
+        # but it wasn't always true, so some of our online event locations were empty.
         # Instead we'll try checking if they have no address.
-        if venue == '' and addr == '' and city == '' and state == '' and zipcode == '':
-            str_loc = 'Online'
+        if not str_loc: str_loc = 'Online'
 
         return str_loc
 
@@ -350,7 +381,8 @@ class EventDiffer():
         self,
         events_from_source,
         events_at_destination,
-        destination_class=AirtableEvent
+        destination_class=AirtableEvent,
+        verbose=False
     ):
         """Create an EventDiffer.
 
@@ -362,7 +394,12 @@ class EventDiffer():
             with, in case there are no existing destination events to match
             against. defaults to AirtableEvent
         :type destination_class: class, optional
+        :param verbose: Whether to print detailed information about the
+            calculated changes. defaults to False
+        :type verbose: boolean, optional
         """
+        self.verbose = verbose
+
         self.events_from_source = events_from_source
         self.source_class = self._event_class(events_from_source)
 
@@ -402,8 +439,9 @@ class EventDiffer():
             if getattr(e, self.common_id_name) is not None
         }
 
-    def diff_events(self):
-        """Compute the diffs and store in instance variables.
+    def match_events(self):
+        """Match up events across the source and destination systems and
+        store in instance variables.
 
         Must be run before accessing the change sets (events_to_add, etc).
         """
@@ -411,17 +449,16 @@ class EventDiffer():
         dest_events = self._events_by_common_id(self.events_at_destination)
 
         not_in_destination = []
-        updated_pairs = []
+        present_in_both = []
         for common_id, source_event in source_events.items():
             if common_id in dest_events:
                 dest_event = dest_events.pop(common_id)
-                if dest_event.updated_at < source_event.updated_at:
-                    updated_pairs.append([dest_event, source_event])
+                present_in_both.append([dest_event, source_event])
             else:
                 not_in_destination.append(source_event)
 
         self.new_source_events = not_in_destination
-        self.updated_source_dest_event_pairs = updated_pairs
+        self.matching_source_dest_event_pairs = present_in_both
         self.dest_events_removed_from_source = list(dest_events.values())
 
     def events_to_add(self):
@@ -442,10 +479,12 @@ class EventDiffer():
         :return: list of destination-type events
         """
         events_to_update = []
-        for dest_event, source_event in self.updated_source_dest_event_pairs:
+        for dest_event, source_event in self.matching_source_dest_event_pairs:
             event = source_event.translate_to(self.destination_class)
             event.primary_id = dest_event.primary_id
-            events_to_update.append(event)
+            if dest_event != event:
+                if self.verbose: dest_event.print_diff(event)
+                events_to_update.append(event)
         return events_to_update
 
     def events_to_delete(self):

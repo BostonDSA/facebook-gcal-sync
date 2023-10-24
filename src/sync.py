@@ -142,6 +142,7 @@ def handler(event, *_):
     channel = event.get('channel') or SLACK_CHANNEL
     dryrun = event.get('dryrun') or False
     user = event.get('user')
+    verbose = event.get('verbose') or False
 
     actionnetwork_events = []
     for actionnetwork_group, actionnetwork_key in ACTION_NETWORK_GROUP_KEY_MAP.items():
@@ -151,24 +152,30 @@ def handler(event, *_):
         actionnetwork = ActionNetwork(actionnetwork_key)
         actionnetwork_events.extend(actionnetwork.events())
 
-
     airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
     airtable_events = airtable.events()
 
     differ = EventDiffer(
         events_from_source=actionnetwork_events,
-        events_at_destination=airtable_events
+        events_at_destination=airtable_events,
+        verbose=verbose
     )
-    differ.diff_events()
+    differ.match_events()
 
     new_events = differ.events_to_add()
     changed_events = differ.events_to_update()
     removed_events = differ.events_to_delete()
 
-    print(f"All events retrieved from ActionNetwork: {actionnetwork_events}")
-    print(f"New events: {new_events}")
-    print(f"Changed events: {changed_events}")
-    print(f"Removed events: {removed_events}")
+    if verbose:
+        print(f"All events retrieved from ActionNetwork: {actionnetwork_events}")
+        print(f"New events: {new_events}")
+        print(f"Changed events: {changed_events}")
+        print(f"Removed events: {removed_events}")
+
+    print(f"{len(actionnetwork_events)} events retrieved from ActionNetwork")
+    print(f"{len(new_events)} new events: ")
+    print(f"{len(changed_events)} changed events")
+    print(f"{len(removed_events)} Removed events")
 
     if not dryrun:
         airtable.add_events(new_events)
@@ -180,10 +187,12 @@ if __name__ == '__main__':
                     prog = 'ActionNetwork',
                     description = 'Syncs events from ActionNetwork to Airtable')
     parser.add_argument('-s', '--sync', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
 
     handler({
         'dryrun': not args.sync,
+        'verbose': args.verbose,
         'user': 'U7P1MU20P',
         'channel': 'GB1SLKKL7',
     })

@@ -7,7 +7,6 @@ name = "pypi"
 boto3 = "*"
 pyactionnetwork = "*"
 pyairtable = "*"
-pytz = "*"
 requests = "*"
 
 [dev-packages]
@@ -16,7 +15,7 @@ ipython = "*"
 pytest = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.11"
 
 [packages.fest]
 git = "https://github.com/BostonDSA/fest.git"
