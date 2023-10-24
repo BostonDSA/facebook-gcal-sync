@@ -346,14 +346,19 @@ class ActionNetworkEvent(Event):
         state = loc['region'] if 'region' in loc else ''
         zipcode = loc['postal_code'] if 'postal_code' in loc else ''
 
-        str_loc = f'{venue}, {addr}, {city} {state}, {zipcode}'
+        # Only include parts of the address that have non-whitespace content.
+        # Sometimes, hosts enter just the venue title such as 'Zoom' or
+        # 'City Hall'
+        str_loc = ", ".join([
+            part for part in [venue, addr, f'{city} {state}', zipcode] 
+            if part.strip()
+        ])
 
-        # I didn't find any flag that indicates the event is online.
+        # There is no flag that indicates the event is online.
         # Online events seemed to have the same lat/long, so we tried using that,
-        # but it wasn't always true, so some of our online event locations were just commas.
+        # but it wasn't always true, so some of our online event locations were empty.
         # Instead we'll try checking if they have no address.
-        if venue == '' and addr == '' and city == '' and state == '' and zipcode == '':
-            str_loc = 'Online'
+        if not str_loc: str_loc = 'Online'
 
         return str_loc
 
