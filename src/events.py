@@ -222,6 +222,14 @@ class AirtableEvent(Event):
         self.set(actionnetwork_id, 'fields',  'actionnetwork_id')
 
     @property
+    def actionnetwork_link(self):
+        return self.lookup('fields', 'actionnetwork_link')
+
+    @actionnetwork_link.setter
+    def actionnetwork_link(self, actionnetwork_link):
+        self.set(actionnetwork_link, 'fields',  'actionnetwork_link')
+
+    @property
     def title(self):
         return self.lookup('fields', 'Event Title')
 
@@ -293,6 +301,10 @@ class ActionNetworkEvent(Event):
         for identifier in self.lookup('identifiers'):
             if identifier.startswith('action_network:'):
                 return identifier[len('action_network:'):]
+
+    @property
+    def actionnetwork_link(self):
+        return self.lookup('browser_url')
 
     @property
     def updated_at(self):

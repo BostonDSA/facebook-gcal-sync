@@ -173,7 +173,7 @@ def handler(event, *_):
         print(f"Removed events: {removed_events}")
 
     print(f"{len(actionnetwork_events)} events retrieved from ActionNetwork")
-    print(f"{len(new_events)} new events: ")
+    print(f"{len(new_events)} new events")
     print(f"{len(changed_events)} changed events")
     print(f"{len(removed_events)} Removed events")
 
