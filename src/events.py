@@ -231,11 +231,18 @@ class AirtableEvent(Event):
 
     @property
     def description(self):
-        return self.lookup('fields', 'Description')
+        desc = self.lookup('fields', 'Description')
+        # When reading or comparing descriptions, ignore extra whitespace
+        # inserted by the Airtable platform
+        return desc.strip() if desc else desc
 
     @description.setter
     def description(self, description):
-        self.set(description, 'fields', 'Description')
+        # Airtable forums state that long text fields can store up to 100,000
+        # characters. Some of our ActionNetwork descriptions exceed this
+        # (primarily due to embedded images). For now, simply truncate to fit
+        airtable_desc = description[0:50000]
+        self.set(airtable_desc, 'fields', 'Description')
 
     @property
     def host_group(self):
