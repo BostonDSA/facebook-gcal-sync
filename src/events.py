@@ -53,6 +53,14 @@ class Event(ABC):
         return super().__repr__().replace(
             "object", f"{primary_id}|'{self.title}'"
         )
+    
+    def print_diff(self, other):
+        print(f"\nDifferences in Event: {self}")
+        for field in self.event_fields().union(other.event_fields()):
+            self_value = self.event_info()[field]
+            other_value = other.event_info()[field]
+            if self_value != other_value:
+                print(f"Field {field}: {self_value} >> {other_value}")
 
     @property
     def primary_id(self):
@@ -364,7 +372,8 @@ class EventDiffer():
         self,
         events_from_source,
         events_at_destination,
-        destination_class=AirtableEvent
+        destination_class=AirtableEvent,
+        verbose=False
     ):
         """Create an EventDiffer.
 
@@ -376,7 +385,12 @@ class EventDiffer():
             with, in case there are no existing destination events to match
             against. defaults to AirtableEvent
         :type destination_class: class, optional
+        :param verbose: Whether to print detailed information about the
+            calculated changes. defaults to False
+        :type verbose: boolean, optional
         """
+        self.verbose = verbose
+
         self.events_from_source = events_from_source
         self.source_class = self._event_class(events_from_source)
 
@@ -460,6 +474,7 @@ class EventDiffer():
             event = source_event.translate_to(self.destination_class)
             event.primary_id = dest_event.primary_id
             if dest_event != event:
+                if self.verbose: dest_event.print_diff(event)
                 events_to_update.append(event)
         return events_to_update
 
