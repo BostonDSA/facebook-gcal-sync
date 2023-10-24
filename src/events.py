@@ -52,7 +52,7 @@ class Event(ABC):
         return super().__repr__().replace(
             "object", f"{primary_id}|'{self.title}'"
         )
-    
+
     def print_diff(self, other):
         print(f"\nDifferences in Event: {self}")
         for field in self.event_fields().union(other.event_fields()):
@@ -137,7 +137,7 @@ class Event(ABC):
         :rtype: set
         """
         return set(dir(cls)) - set(dir(Event)) - cls.DERIVED_FIELD_NAMES
-    
+
     def event_info(self):
         """Get the names and values of all properties containing information
         about the event record itself.
@@ -145,9 +145,9 @@ class Event(ABC):
         :return: dictionary of event information
         :rtype: dict
         """
-        return { 
+        return {
             field: getattr(self, field)
-            for field in self.__class__.event_fields() 
+            for field in self.__class__.event_fields()
         }
 
     def translate_to(self, new_class):
@@ -177,7 +177,7 @@ class Event(ABC):
         # formatted strings, so use this as the default read behavior
         else:
             dt = datetime.fromisoformat(raw_time)
-        return dt  
+        return dt
 
     @classmethod
     def from_datetime(cls, dt):
@@ -247,7 +247,7 @@ class AirtableEvent(Event):
     @property
     def host_group(self):
         return self.lookup('fields', 'Host Group')
-    
+
     @host_group.setter
     def host_group(self, group_name):
         return self.set(group_name, 'fields', 'Host Group')
@@ -305,7 +305,7 @@ class ActionNetworkEvent(Event):
     @property
     def description(self):
         return self.lookup('description')
-    
+
     @property
     def host_group(self):
         return self.lookup('action_network:sponsor', 'title')
@@ -350,7 +350,7 @@ class ActionNetworkEvent(Event):
         # Sometimes, hosts enter just the venue title such as 'Zoom' or
         # 'City Hall'
         str_loc = ", ".join([
-            part for part in [venue, addr, f'{city} {state}', zipcode] 
+            part for part in [venue, addr, f'{city} {state}', zipcode]
             if part.strip()
         ])
 
