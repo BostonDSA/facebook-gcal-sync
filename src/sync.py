@@ -20,12 +20,11 @@ SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
 SECRETSMANAGER = boto3.client('secretsmanager')
 SNS = boto3.client('sns')
 
-ACTION_NETWORK_KEY = os.environ.get('ACTION_NETWORK_KEY')
-if not ACTION_NETWORK_KEY:
+ACTION_NETWORK_GROUP_KEY_MAP = os.environ.get('ACTION_NETWORK_GROUP_KEY_MAP')
+if not ACTION_NETWORK_GROUP_KEY_MAP:
     secret_id = os.environ.get('ACTION_NETWORK_SECRET_ID')
     raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
-    secret = json.loads(raw_secret['SecretString'])
-    ACTION_NETWORK_KEY = secret['api_key']
+    ACTION_NETWORK_GROUP_KEY_MAP = json.loads(raw_secret['SecretString'])
 
 AIRTABLE_BASE_ID = os.environ.get('AIRTABLE_BASE_ID')
 AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
@@ -144,8 +143,14 @@ def handler(event, *_):
     dryrun = event.get('dryrun') or False
     user = event.get('user')
 
-    actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
-    actionnetwork_events = actionnetwork.events()
+    actionnetwork_events = []
+    for actionnetwork_group, actionnetwork_key in ACTION_NETWORK_GROUP_KEY_MAP.items():
+        if not actionnetwork_key: continue  # Skip any keys that have not yet been populated
+
+        print(f"Fetching ActionNetwork events for: {actionnetwork_group}")
+        actionnetwork = ActionNetwork(actionnetwork_key)
+        actionnetwork_events.extend(actionnetwork.events())
+
 
     airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
     airtable_events = airtable.events()
@@ -170,47 +175,15 @@ def handler(event, *_):
         airtable.update_events(changed_events)
         airtable.delete_events(removed_events)
 
-def get_single_event(event_id):
-    actionnetwork = ActionNetwork(ACTION_NETWORK_KEY)
-    return actionnetwork.event(event_id)
-
-def sync_single_event(event_id):
-    event = get_single_event(event_id)
-    actionnetwork_events = [event]
-    airtable = Airtable(AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
-    airtable_events = airtable.events()
-
-    differ = EventDiffer(
-        events_from_source=actionnetwork_events,
-        events_at_destination=airtable_events
-    )
-    differ.diff_events()
-
-    new_events = differ.events_to_add()
-    changed_events = differ.events_to_update()
-
-    print(new_events)
-    print(changed_events)
-
-    airtable.add_events(new_events)
-    airtable.update_events(changed_events)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
                     prog = 'ActionNetwork',
                     description = 'Syncs events from ActionNetwork to Airtable')
-    parser.add_argument('-e', '--event', required=False)
     parser.add_argument('-s', '--sync', action='store_true')
     args = parser.parse_args()
 
-    if args.event:
-        if args.sync:
-            sync_single_event(args.event)
-        else:
-            pprint(get_single_event(args.event).raw)
-    else:
-        handler({
-            'dryrun': True, # False,
-            'user': 'U7P1MU20P',
-            'channel': 'GB1SLKKL7',
-        })
+    handler({
+        'dryrun': not args.sync,
+        'user': 'U7P1MU20P',
+        'channel': 'GB1SLKKL7',
+    })

@@ -212,6 +212,14 @@ class AirtableEvent(Event):
         self.set(description, 'fields', 'Description')
 
     @property
+    def host_group(self):
+        return self.lookup('fields', 'Host Group')
+    
+    @host_group.setter
+    def host_group(self, group_name):
+        return self.set(group_name, 'fields', 'Host Group')
+
+    @property
     def start(self):
         return AirtableEvent.to_datetime(self.lookup('fields', 'Start Time'))
 
@@ -270,6 +278,10 @@ class ActionNetworkEvent(Event):
     @property
     def description(self):
         return self.lookup('description')
+    
+    @property
+    def host_group(self):
+        return self.lookup('action_network:sponsor', 'title')
 
     @property
     def start(self):
