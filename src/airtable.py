@@ -22,6 +22,3 @@ class Airtable(pyairtable.Table):
 
     def update_events(self, events_to_update: list[AirtableEvent]):
         self.batch_update([event.raw for event in events_to_update])
-
-    def delete_events(self, events_to_delete: list[AirtableEvent]):
-        self.batch_delete([event.airtable_id for event in events_to_delete])

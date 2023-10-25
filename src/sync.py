@@ -164,8 +164,10 @@ def handler(event, *_):
     differ.match_events()
 
     new_events = differ.events_to_add()
-    changed_events = differ.events_to_update()
-    removed_events = differ.events_to_delete()
+
+    updated_events = differ.events_to_update()
+    changed_events = [e for e in updated_events if not e.removed]
+    removed_events = [e for e in updated_events if e.removed]
 
     if verbose:
         print(f"All events retrieved from ActionNetwork: {actionnetwork_events}")
@@ -180,8 +182,8 @@ def handler(event, *_):
 
     if not dryrun:
         airtable.add_events(new_events)
-        airtable.update_events(changed_events)
-        airtable.delete_events(removed_events)
+        # Cancelled events are marked removed in Airtable by updating them
+        airtable.update_events(changed_events + removed_events)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

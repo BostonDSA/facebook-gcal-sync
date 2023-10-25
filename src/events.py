@@ -293,6 +293,14 @@ class AirtableEvent(Event):
     def location(self, location):
         return self.set(location, 'fields', 'Location')
 
+    @property
+    def removed(self):
+        return bool(self.lookup('fields', 'removed'))
+
+    @removed.setter
+    def removed(self, removed):
+        self.set(removed, 'fields', 'removed')
+
 class ActionNetworkEvent(Event):
     PRIMARY_ID_NAME = 'actionnetwork_id'
 
@@ -373,6 +381,10 @@ class ActionNetworkEvent(Event):
         if not str_loc: str_loc = 'Online'
 
         return str_loc
+
+    @property
+    def removed(self):
+        return self.lookup('status') == 'cancelled'
 
 
 class EventDiffer():
@@ -471,7 +483,12 @@ class EventDiffer():
 
         self.new_source_events = not_in_destination
         self.matching_source_dest_event_pairs = present_in_both
-        self.dest_events_removed_from_source = list(dest_events.values())
+
+        if list(dest_events.values()):
+            raise ValueError(
+                "Events exist at the destination but are not "
+                f"present in the source: {dest_events}"
+            )
 
     def events_to_add(self):
         """Events that do not exist in the destination and can be added to
@@ -498,11 +515,3 @@ class EventDiffer():
                 if self.verbose: dest_event.print_diff(event)
                 events_to_update.append(event)
         return events_to_update
-
-    def events_to_delete(self):
-        """Events that do not exist in the source and can be removed from the
-        destination to bring it into alignment with the source.
-
-        :return: list of destination-type events
-        """
-        return self.dest_events_removed_from_source
