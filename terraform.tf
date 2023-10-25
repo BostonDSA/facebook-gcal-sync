@@ -174,7 +174,7 @@ resource "aws_lambda_function" "sync" {
   function_name    = local.app_name
   handler          = "sync.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.9"
+  runtime          = "python3.11"
   source_code_hash = filebase64sha256("dist/sync.zip")
   tags             = local.tags
   timeout          = 15
@@ -237,7 +237,7 @@ resource "aws_lambda_function" "alarm" {
   function_name    = "${local.app_name}-alarm"
   handler          = "alarm.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.9"
+  runtime          = "python3.11"
   source_code_hash = filebase64sha256("dist/alarm.zip")
   tags             = local.tags
 
