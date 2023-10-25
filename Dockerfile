@@ -1,4 +1,4 @@
-ARG PYTHON=3.9
+ARG PYTHON=3.11
 ARG TERRAFORM=latest
 
 FROM amazon/aws-lambda-python:${PYTHON} AS lock

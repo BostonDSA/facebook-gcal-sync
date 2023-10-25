@@ -18,7 +18,7 @@ TBD
 1. Populate secrets.
 1. `pipenv sync --dev` to install Python depenencies.
 1. `pipenv shell` to load virtual env.
-1. `python3 src/sync.py` to do a test run.
+1. `python3 src/sync.py` to do a dry run (add the `-s` flag to push to airtable).
 
 
 ## Deployment

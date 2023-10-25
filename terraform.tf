@@ -7,8 +7,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = "us-east-1"
-  version = "~> 3.0"
+  region = "us-east-1"
   assume_role {
     role_arn = var.AWS_ROLE_ARN
   }
@@ -18,8 +17,6 @@ locals {
   app_name                       = "actionnetwork-airtable-sync"
   event_rule_schedule_expression = "rate(1 hour)"
   event_rule_is_enabled          = true
-  facebook_page_id               = "BostonDSA"
-  google_calendar_id             = "u21m8kt8bb1lflp8jpmd317iik@group.calendar.google.com"
   repo                           = "https://github.com/BostonDSA/facebook-gcal-sync"
 
   slack_channels = {
@@ -39,7 +36,7 @@ locals {
  *
  * Can be assumed by CloudWatch & Lambda
  * Grant permission to invoke sync Lambda from from CloudWatch
- * Grant permission to get facebook/Google secrets from Lambda
+ * Grant permission to get ActionNetwork/Airtable secrets from Lambda
  * Grant permission to publish to SNS topic to send Slack messages
  * Grant permission to write CloudWatch logs
  */
@@ -81,9 +78,8 @@ data "aws_iam_policy_document" "inline" {
     ]
 
     resources = [
-      data.aws_secretsmanager_secret.facebook.arn,
-      data.aws_secretsmanager_secret.google.arn,
       data.aws_secretsmanager_secret.action_network.arn,
+      data.aws_secretsmanager_secret.airtable.arn,
     ]
   }
 
@@ -114,16 +110,12 @@ data "aws_iam_policy_document" "inline" {
   }
 }
 
-data "aws_secretsmanager_secret" "facebook" {
-  name = "facebook/BostonDSA"
-}
-
-data "aws_secretsmanager_secret" "google" {
-  name = "google/socialismbot"
-}
-
 data "aws_secretsmanager_secret" "action_network" {
-  name = "actionnetwork/BostonDSA"
+  name = "actionnetwork/production"
+}
+
+data "aws_secretsmanager_secret" "airtable" {
+  name = "airtable/production"
 }
 
 data "aws_sns_topic" "socialismbot" {
@@ -131,7 +123,7 @@ data "aws_sns_topic" "socialismbot" {
 }
 
 resource "aws_iam_role" "role" {
-  description        = "Access to facebook, Google, and AWS resources."
+  description        = "Access to ActionNetwork, Airtable, and AWS resources."
   name               = local.app_name
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
@@ -142,7 +134,7 @@ resource "aws_iam_role_policy" "role_policy" {
   role   = aws_iam_role.role.name
 }
 
-/* SYNC - Sync facebook events with Google Calendar
+/* SYNC - Sync ActionNetwork events to Airtable
  *
  * CloudWatch event rule runs on schedule
  * CloudWatch event target triggers Lambda function
@@ -150,7 +142,7 @@ resource "aws_iam_role_policy" "role_policy" {
  */
 
 resource "aws_cloudwatch_event_rule" "sync" {
-  description         = "Sync facebook events with Google Calendar"
+  description         = "Sync Action Network events with Airtable"
   is_enabled          = local.event_rule_is_enabled
   name                = aws_lambda_function.sync.function_name
   role_arn            = aws_iam_role.role.arn
@@ -169,26 +161,23 @@ resource "aws_cloudwatch_log_group" "sync" {
 }
 
 resource "aws_lambda_function" "sync" {
-  description      = "Synchronize facebook page events with Google Calendar"
+  description      = "Synchronize Action Network events with Airtable"
   filename         = "dist/sync.zip"
   function_name    = local.app_name
   handler          = "sync.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.9"
+  runtime          = "python3.11"
   source_code_hash = filebase64sha256("dist/sync.zip")
   tags             = local.tags
   timeout          = 15
 
   environment {
     variables = {
-      FACEBOOK_PAGE_ID   = local.facebook_page_id
-      FACEBOOK_SECRET    = data.aws_secretsmanager_secret.facebook.name
-      GOOGLE_CALENDAR_ID = local.google_calendar_id
-      GOOGLE_SECRET      = data.aws_secretsmanager_secret.google.name
-      SLACK_CHANNEL      = local.slack_channels["events"]
-      SLACK_FOOTER_URL   = local.repo
-      SLACK_TOPIC_ARN    = data.aws_sns_topic.socialismbot.arn
-      ACTION_NETWORK_KEY = data.aws_secretsmanager_secret.action_network.name
+      SLACK_CHANNEL            = local.slack_channels["events"]
+      SLACK_FOOTER_URL         = local.repo
+      SLACK_TOPIC_ARN          = data.aws_sns_topic.socialismbot.arn
+      ACTION_NETWORK_SECRET_ID = data.aws_secretsmanager_secret.action_network.name
+      AIRTABLE_SECRET_ID       = data.aws_secretsmanager_secret.airtable.name
     }
   }
 }
@@ -237,7 +226,7 @@ resource "aws_lambda_function" "alarm" {
   function_name    = "${local.app_name}-alarm"
   handler          = "alarm.handler"
   role             = aws_iam_role.role.arn
-  runtime          = "python3.9"
+  runtime          = "python3.11"
   source_code_hash = filebase64sha256("dist/alarm.zip")
   tags             = local.tags
 
