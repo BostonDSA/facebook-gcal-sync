@@ -1,5 +1,5 @@
 import pyairtable
-from events import AirtableEvent
+from event_models.events import AirtableEvent
 
 TABLE_NAME = "Events"
 
