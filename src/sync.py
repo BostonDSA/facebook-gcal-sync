@@ -8,9 +8,9 @@ from pprint import pprint
 
 import boto3
 
-from event_connectors.actionnetwork import ActionNetwork
-from event_connectors.airtable import Airtable
-from event_models.events import EventDiffer
+from src.event_connectors.actionnetwork import ActionNetwork
+from src.event_connectors.airtable import Airtable
+from src.event_models.events import EventDiffer
 
 SLACK_CHANNEL = os.environ['SLACK_CHANNEL']
 SLACK_FOOTER_URL = os.environ['SLACK_FOOTER_URL']
