@@ -169,7 +169,7 @@ resource "aws_lambda_function" "sync" {
   runtime          = "python3.11"
   source_code_hash = filebase64sha256("dist/sync.zip")
   tags             = local.tags
-  timeout          = 15
+  timeout          = 900
 
   environment {
     variables = {

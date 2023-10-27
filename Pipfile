@@ -16,7 +16,3 @@ pytest = "*"
 
 [requires]
 python_version = "3.11"
-
-[packages.fest]
-git = "https://github.com/BostonDSA/fest.git"
-editable = true

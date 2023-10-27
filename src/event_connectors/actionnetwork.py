@@ -1,6 +1,6 @@
 import pyactionnetwork
 import requests
-from src.event_models.events import ActionNetworkEvent
+from event_models.events import ActionNetworkEvent
 
 CREATION_WINDOW_DAYS = 365
 
