@@ -1,7 +1,6 @@
 import unittest.mock as mock
 import requests
 from src import actionnetwork
-from fest import facebook
 from datetime import datetime
 
 TEST_KEY = 'test_key'
@@ -204,10 +203,10 @@ def fake_get(url, *args, **kwargs):
     return MockResponse({}, 404)
 
 
-@mock.patch('src.actionnetwork.datetime')
-@mock.patch('src.actionnetwork.requests.post')
-@mock.patch('src.actionnetwork.requests.put')
-@mock.patch('src.actionnetwork.requests.get', side_effect=fake_get)
+@mock.patch('actionnetwork.datetime')
+@mock.patch('actionnetwork.requests.post')
+@mock.patch('actionnetwork.requests.put')
+@mock.patch('actionnetwork.requests.get', side_effect=fake_get)
 def test_sync(get, put, post, dt):
     dt.utcnow.return_value = datetime(year=2018, day=5, month=12, hour=0, minute=0)
     dt.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)

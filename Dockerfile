@@ -10,7 +10,7 @@ RUN pipenv requirements --dev > requirements-dev-lock.txt
 
 FROM amazon/aws-lambda-python:${PYTHON} AS zip
 RUN yum install -y git zip
-COPY src/sync.py .
+COPY src .
 COPY --from=lock /var/task/ .
 RUN mkdir dist
 RUN pip install -r requirements-lock.txt -t .
