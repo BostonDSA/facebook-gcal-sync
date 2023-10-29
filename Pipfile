@@ -4,15 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fest = "*"
+boto3 = "*"
 pyactionnetwork = "*"
+pyairtable = "*"
 requests = "*"
 
 [dev-packages]
-boto3 = "*"
 ipdb = "*"
 ipython = "*"
 pytest = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.11"

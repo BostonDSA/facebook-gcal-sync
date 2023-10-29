@@ -1,22 +1,17 @@
+import argparse
 import json
 import os
 import urllib
 from datetime import date
 from datetime import datetime
+from pprint import pprint
 
 import boto3
-import facebook
-from google.oauth2 import service_account
-from googleapiclient import discovery
 
-import pprint
+from event_connectors.actionnetwork import ActionNetwork
+from event_connectors.airtable import Airtable
+from event_models.events import EventDiffer
 
-import fest
-
-FACEBOOK_PAGE_ID = os.environ['FACEBOOK_PAGE_ID']
-FACEBOOK_SECRET = os.environ['FACEBOOK_SECRET']
-GOOGLE_CALENDAR_ID = os.environ['GOOGLE_CALENDAR_ID']
-GOOGLE_SECRET = os.environ['GOOGLE_SECRET']
 SLACK_CHANNEL = os.environ['SLACK_CHANNEL']
 SLACK_FOOTER_URL = os.environ['SLACK_FOOTER_URL']
 SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
@@ -25,24 +20,20 @@ SLACK_TOPIC_ARN = os.environ['SLACK_TOPIC_ARN']
 SECRETSMANAGER = boto3.client('secretsmanager')
 SNS = boto3.client('sns')
 
-# Get facebook/Google secrets
-FACEBOOK_PAGE_TOKEN = \
-    SECRETSMANAGER.get_secret_value(SecretId=FACEBOOK_SECRET)['SecretString']
-GOOGLE_SERVICE_ACCOUNT = json.loads(
-    SECRETSMANAGER.get_secret_value(SecretId=GOOGLE_SECRET)['SecretString']
-)
-GOOGLE_CREDENTIALS = service_account.Credentials.from_service_account_info(
-    GOOGLE_SERVICE_ACCOUNT
-)
+ACTION_NETWORK_GROUP_KEY_MAP = os.environ.get('ACTION_NETWORK_GROUP_KEY_MAP')
+if not ACTION_NETWORK_GROUP_KEY_MAP:
+    secret_id = os.environ.get('ACTION_NETWORK_SECRET_ID')
+    raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
+    ACTION_NETWORK_GROUP_KEY_MAP = json.loads(raw_secret['SecretString'])
 
-# Get facebook/Google clients
-GRAPHAPI = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-CALENDARAPI = discovery.build(
-    'calendar', 'v3',
-    cache_discovery=False,
-    credentials=GOOGLE_CREDENTIALS,
-)
-
+AIRTABLE_PERSONAL_ACCESS_TOKEN = os.environ.get('AIRTABLE_PERSONAL_ACCESS_TOKEN')
+AIRTABLE_BASE_ID = os.environ.get('AIRTABLE_BASE_ID')
+if not AIRTABLE_PERSONAL_ACCESS_TOKEN and not AIRTABLE_BASE_ID:
+    secret_id = os.environ['AIRTABLE_SECRET_ID']
+    raw_secret = SECRETSMANAGER.get_secret_value(SecretId=secret_id)
+    secret = json.loads(raw_secret['SecretString'])
+    AIRTABLE_PERSONAL_ACCESS_TOKEN = secret['personal_access_token']
+    AIRTABLE_BASE_ID = secret['base_id']
 
 def event_time(time):
     try:
@@ -149,47 +140,62 @@ def handler(event, *_):
 
     # Get args from event
     event = event or {}
-    cal_id = event.get('calendarId') or GOOGLE_CALENDAR_ID
     channel = event.get('channel') or SLACK_CHANNEL
     dryrun = event.get('dryrun') or False
-    page_id = event.get('pageId') or FACEBOOK_PAGE_ID
     user = event.get('user')
+    verbose = event.get('verbose') or False
 
-    # Initialize facebook page & Google Calendar
-    page = fest.FacebookPage(GRAPHAPI, page_id)
-    gcal = fest.GoogleCalendar(CALENDARAPI, cal_id)
-    page.logger.setLevel('INFO')
-    gcal.logger.setLevel('INFO')
+    actionnetwork_events = []
+    for actionnetwork_group, actionnetwork_key in ACTION_NETWORK_GROUP_KEY_MAP.items():
+        if not actionnetwork_key: continue  # Skip any keys that have not yet been populated
 
-    # Sync
-    sync = gcal.sync(page, time_filter='upcoming').execute(dryrun=dryrun)
+        print(f"Fetching ActionNetwork events for: {actionnetwork_group}")
+        actionnetwork = ActionNetwork(actionnetwork_key)
+        actionnetwork_events.extend(actionnetwork.events())
 
-    # Get Slack message
-    message = slack_message(sync.responses, channel, user)
+    airtable = Airtable(AIRTABLE_PERSONAL_ACCESS_TOKEN, AIRTABLE_BASE_ID)
+    airtable_events = airtable.events()
 
-    # Post and return
-    print(f'MESSAGE {json.dumps(message)}')
-    if not dryrun and message['attachments']:
-        SNS.publish(
-            TopicArn=SLACK_TOPIC_ARN,
-            Message=json.dumps(message),
-            MessageAttributes={
-                'id': {
-                    'DataType': 'String',
-                    'StringValue': 'postMessage'
-                },
-                'type': {
-                    'DataType': 'String',
-                    'StringValue': 'chat'
-                }
-            }
-        )
-    return message
+    differ = EventDiffer(
+        events_from_source=actionnetwork_events,
+        events_at_destination=airtable_events,
+        verbose=verbose
+    )
+    differ.match_events()
 
+    new_events = differ.events_to_add()
+
+    updated_events = differ.events_to_update()
+    changed_events = [e for e in updated_events if not e.removed]
+    removed_events = [e for e in updated_events if e.removed]
+
+    if verbose:
+        print(f"All events retrieved from ActionNetwork: {actionnetwork_events}")
+        print(f"New events: {new_events}")
+        print(f"Changed events: {changed_events}")
+        print(f"Removed events: {removed_events}")
+
+    print(f"{len(actionnetwork_events)} events retrieved from ActionNetwork")
+    print(f"{len(new_events)} new events")
+    print(f"{len(changed_events)} changed events")
+    print(f"{len(removed_events)} Removed events")
+
+    if not dryrun:
+        airtable.add_events(new_events)
+        # Cancelled events are marked removed in Airtable by updating them
+        airtable.update_events(changed_events + removed_events)
 
 if __name__ == '__main__':
-    print(handler({
-        'dryrun': True,
+    parser = argparse.ArgumentParser(
+                    prog = 'ActionNetwork',
+                    description = 'Syncs events from ActionNetwork to Airtable')
+    parser.add_argument('-s', '--sync', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    args = parser.parse_args()
+
+    handler({
+        'dryrun': not args.sync,
+        'verbose': args.verbose,
         'user': 'U7P1MU20P',
         'channel': 'GB1SLKKL7',
-    }))
+    })
