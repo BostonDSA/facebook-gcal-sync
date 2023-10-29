@@ -1,13 +1,11 @@
-#  Local .terraform directories
+# terraform stuff
 **/.terraform/*
-
-# .tfstate files
 *.tfstate
 *.tfstate.*
-
-# .tfvars files
 *.tfvars
-
+tfplan
+.terraform.lock.hcl
+# build artifacts
 .docker/
 .env
 build
