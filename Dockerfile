@@ -6,7 +6,7 @@ COPY src .
 COPY src/alarm.py .
 
 # Install linux packages
-RUN yum install -y git zip
+RUN microdnf install -y git zip findutils
 
 # Install python packages
 RUN pip install pipenv
