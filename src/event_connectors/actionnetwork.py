@@ -25,7 +25,11 @@ class ActionNetwork(pyactionnetwork.ActionNetworkApi):
     def raw_events(self, **kwargs):
         events_response = self._events(**kwargs)
         events = []
-        events += events_response['_embedded']['osdi:events'] or []
+        try:
+            events += events_response['_embedded']['osdi:events'] or []
+        except KeyError:
+            print('WARNING: Response was missing events')
+            return events
 
         while events_response['page'] < events_response['total_pages']:
             print(f"Fetching event page {events_response['page']} out of {events_response['total_pages']}")
