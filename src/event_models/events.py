@@ -485,8 +485,8 @@ class EventDiffer():
         self.matching_source_dest_event_pairs = present_in_both
 
         if list(dest_events.values()):
-            raise ValueError(
-                "Events exist at the destination but are not "
+            print(
+                "WARNING: Events exist at the destination but are not "
                 f"present in the source: {dest_events}"
             )
 
